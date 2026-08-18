@@ -130,23 +130,13 @@ const grid = document.querySelector('#product-grid');
 const search = document.querySelector('#product-search');
 
 const shopQty = {};
-function hasVialBacOption(p){
+function isVialDiscountEligible(p){
+  // Applies to peptide/injectable vials measured in MG. Liquid ML products and supplies are excluded.
   return p.category==='Injectables' && /\bMG\b/i.test(p.size);
 }
-function purchaseOptions(p){
-  if(hasVialBacOption(p)) return [
-    {key:`${p.id}::SET`,label:'Complete Set',price:p.price,inStock:p.inStock},
-    {key:`${p.id}::VBW`,label:'Vial + BAC Water only',price:Math.max(0,p.price-200),inStock:p.inStock}
-  ];
-  return [{key:p.id,label:'Standard',price:p.price,inStock:p.inStock}];
-}
 function resolveCartItem(key){
-  const [id,mode]=String(key).split('::');
-  const base=products.find(p=>p.id===id);
-  if(!base) return null;
-  if(mode==='VBW') return {...base,cartKey:key,packageName:'Vial + BAC Water only',price:Math.max(0,base.price-200)};
-  if(mode==='SET') return {...base,cartKey:key,packageName:'Complete Set',price:base.price};
-  return {...base,cartKey:key,packageName:'',price:base.price};
+  const base=products.find(p=>p.id===String(key));
+  return base ? {...base,cartKey:base.id,packageName:'',price:base.price} : null;
 }
 function productGroups(list){
   const groups=[];
@@ -172,25 +162,19 @@ function renderProducts(){
     const priceMax=Math.max(...g.variants.map(v=>v.price));
     const priceText=priceMin===priceMax?peso(priceMin):`${peso(priceMin)} – ${peso(priceMax)}`;
     const rows=g.variants.map(v=>{
-      const options=purchaseOptions(v);
-      const optionRows=options.map(opt=>{
-        const qty=shopQty[opt.key] ?? 1; shopQty[opt.key]=qty;
-        const standard=options.length===1;
-        const disabled=opt.inStock?'':' disabled';
-        const buttonText=!opt.inStock?'SOLD OUT':(standard?'ADD TO CART':opt.label==='Complete Set'?'ADD SET TO CART':'ADD VIAL + BAC WATER');
-        return `<div class="purchase-option ${standard?'single-option':''} ${opt.inStock?'':'sold-out'}">
-          <div class="purchase-option-top"><span>${standard?'':opt.label}</span><strong>${peso(opt.price)}</strong></div>
-          <div class="variant-card-actions">
-            <div class="shop-stepper"><button type="button" data-shop-qty="${opt.key}" data-delta="-1" aria-label="Decrease ${v.name} ${v.size}"${disabled}>−</button><span data-shop-count="${opt.key}">${qty}</span><button type="button" data-shop-qty="${opt.key}" data-delta="1" aria-label="Increase ${v.name} ${v.size}"${disabled}>+</button></div>
-            <button class="variant-add" type="button" data-add-variant="${opt.key}"${disabled}>${buttonText}</button>
-          </div>
-        </div>`;
-      }).join('');
-      return `<div class="variant-row variant-card">
+      const key=v.id;
+      const qty=shopQty[key] ?? 1; shopQty[key]=qty;
+      const disabled=v.inStock?'':' disabled';
+      const buttonText=v.inStock?'ADD TO CART':'SOLD OUT';
+      return `<div class="variant-row variant-card ${v.inStock?'':'sold-out'}">
         <div class="variant-card-head">
           <div class="variant-info"><b>${esc(g.name)} ${esc(v.size.toLowerCase())}</b><small>${esc(v.code)}</small></div>
+          <strong class="variant-price">${peso(v.price)}</strong>
         </div>
-        <div class="purchase-options">${optionRows}</div>
+        <div class="variant-card-actions">
+          <div class="shop-stepper"><button type="button" data-shop-qty="${key}" data-delta="-1" aria-label="Decrease ${v.name} ${v.size}"${disabled}>−</button><span data-shop-count="${key}">${qty}</span><button type="button" data-shop-qty="${key}" data-delta="1" aria-label="Increase ${v.name} ${v.size}"${disabled}>+</button></div>
+          <button class="variant-add" type="button" data-add-variant="${key}"${disabled}>${buttonText}</button>
+        </div>
       </div>`;
     }).join('');
     return `<article class="product-card grouped-card collapsed" data-product-group="${g.key}">
@@ -211,7 +195,7 @@ function subtotal(){return cartEntries().reduce((s,x)=>s+x.product.price*x.qty,0
 function updateCart(){
   const entries=cartEntries(); const count=entries.reduce((s,x)=>s+x.qty,0); document.querySelectorAll('.cart-count').forEach(x=>x.textContent=count);
   const container=document.querySelector('#cart-items');
-  container.innerHTML=entries.length?entries.map(({product:p,qty,key})=>`<div class="cart-row"><div><h4>${p.name}</h4><small>${p.size}${p.packageName?' · '+p.packageName:''} · ${peso(p.price)}</small><div class="qty-control"><button data-qty="${key}" data-delta="-1">−</button><span>${qty}</span><button data-qty="${key}" data-delta="1">+</button><button class="remove" data-remove="${key}">remove</button></div></div><b>${peso(p.price*qty)}</b></div>`).join(''):'<p class="empty-cart">Your bag is waiting for something pretty ♡</p>';
+  container.innerHTML=entries.length?entries.map(({product:p,qty,key})=>`<div class="cart-row"><div><h4>${p.name}</h4><small>${p.size} · ${peso(p.price)}</small><div class="qty-control"><button data-qty="${key}" data-delta="-1">−</button><span>${qty}</span><button data-qty="${key}" data-delta="1">+</button><button class="remove" data-remove="${key}">remove</button></div></div><b>${peso(p.price*qty)}</b></div>`).join(''):'<p class="empty-cart">Your bag is waiting for something pretty ♡</p>';
   document.querySelector('#cart-subtotal').textContent=peso(subtotal()); document.querySelector('#cart-total').textContent=peso(subtotal());
 }
 function toast(msg){let t=document.querySelector('.toast');if(!t){t=document.createElement('div');t.className='toast';document.body.appendChild(t)}t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),1600)}
@@ -266,26 +250,53 @@ document.querySelector('.nav-toggle').addEventListener('click',e=>{const nav=doc
 document.querySelectorAll('.nav a').forEach(a=>a.addEventListener('click',()=>document.querySelector('.nav').classList.remove('open')));
 
 const checkout=document.querySelector('#checkout-modal'),backdrop=document.querySelector('#checkout-backdrop'),form=document.querySelector('#checkout-form');
+
+// One simple packaging choice at checkout keeps the product cards uncluttered.
+let packaging=document.querySelector('#packaging-method');
+if(!packaging){
+  const deliveryNoteEl=document.querySelector('#delivery-note');
+  const label=document.createElement('label');
+  label.className='span-2';
+  label.innerHTML='PACKAGING <select name="packagingMethod" id="packaging-method"><option value="Complete Set">Complete Set — listed prices</option><option value="Vial + BAC Water only">Vial + BAC Water only — ₱200 off each eligible vial</option></select><small class="field-help">Discount applies only to eligible MG injectable vials in your bag.</small>';
+  deliveryNoteEl.insertAdjacentElement('afterend',label);
+  packaging=label.querySelector('select');
+}
+function eligibleVialQty(){return cartEntries().reduce((sum,{product:p,qty})=>sum+(isVialDiscountEligible(p)?qty:0),0)}
+function packagingDiscount(){return packaging&&packaging.value==='Vial + BAC Water only'?Math.min(subtotal(),eligibleVialQty()*200):0}
+
+let discountRow=document.querySelector('#checkout-discount-row');
+if(!discountRow){
+  const shippingRow=document.querySelector('#checkout-shipping')?.closest('div');
+  discountRow=document.createElement('div');
+  discountRow.id='checkout-discount-row';
+  discountRow.hidden=true;
+  discountRow.innerHTML='<span>Packaging discount</span><b id="checkout-discount">−₱0</b>';
+  shippingRow?.insertAdjacentElement('beforebegin',discountRow);
+}
 function openCheckout(){if(!cartEntries().length){toast('Add an item to your bag first');return}closeCart();checkout.hidden=false;backdrop.classList.add('open');recalcCheckout()}
 function closeCheckout(){checkout.hidden=true;backdrop.classList.remove('open')}
 document.querySelector('#proceed-checkout').addEventListener('click',openCheckout);document.querySelector('#close-checkout').addEventListener('click',closeCheckout);backdrop.addEventListener('click',closeCheckout);
 
 const delivery=document.querySelector('#delivery-method'),region=document.querySelector('#region'),regionLabel=document.querySelector('#region-label'),deliveryNote=document.querySelector('#delivery-note');
 function recalcCheckout(){
-  const sub=subtotal();let ship=0;let shipText='—';
+  const sub=subtotal();const discount=packagingDiscount();let ship=0;let shipText='—';
   const deliveryMethod=(delivery.value||'').trim();
   const selectedRegion=(region.value||'').trim();
   if(deliveryMethod==='Lalamove'){shipText='Paid to rider';deliveryNote.hidden=false;deliveryNote.textContent='Lalamove delivery fee is paid directly to the rider upon delivery and is not included in your store total.';regionLabel.hidden=true;region.required=false;}
   else if(deliveryMethod.startsWith('J&T')){regionLabel.hidden=false;region.required=true;deliveryNote.hidden=false;deliveryNote.textContent='J&T shipping is added to your order total.';if(selectedRegion){ship=Number(shippingRates[selectedRegion]||0);shipText=peso(ship)}}
   else{regionLabel.hidden=true;region.required=false;deliveryNote.hidden=true}
-  document.querySelector('#checkout-subtotal').textContent=peso(sub);document.querySelector('#checkout-shipping').textContent=shipText;document.querySelector('#checkout-total').textContent=peso(sub+ship);
-  return {sub,ship,total:sub+ship,shipText};
+  document.querySelector('#checkout-subtotal').textContent=peso(sub);
+  const discountValue=document.querySelector('#checkout-discount');
+  if(discountRow){discountRow.hidden=discount<=0;if(discountValue)discountValue.textContent=`−${peso(discount)}`;}
+  document.querySelector('#checkout-shipping').textContent=shipText;document.querySelector('#checkout-total').textContent=peso(sub-discount+ship);
+  return {sub,discount,netSubtotal:sub-discount,ship,total:sub-discount+ship,shipText};
 }
 function handleDeliveryChange(){if(!(delivery.value||'').startsWith('J&T'))region.value='';recalcCheckout()}
 delivery.addEventListener('change',handleDeliveryChange);
 delivery.addEventListener('input',handleDeliveryChange);
 region.addEventListener('change',recalcCheckout);
 region.addEventListener('input',recalcCheckout);
+packaging?.addEventListener('change',recalcCheckout);
 
 const payment=document.querySelector('#payment-method'),panel=document.querySelector('#payment-panel'),qr=document.querySelector('#payment-qr'),paymentName=document.querySelector('#payment-name');
 payment.addEventListener('change',()=>{if(payment.value&&paymentQR[payment.value]){qr.src=paymentQR[payment.value];paymentName.textContent=payment.value;panel.hidden=false}else panel.hidden=true});
@@ -324,9 +335,10 @@ form.addEventListener('submit',async e=>{
     if(String(fd.get('deliveryMethod')||'').startsWith('J&T') && totals.ship<=0){throw new Error('Please select your J&T destination so the shipping fee can be added.')} 
     const orderNo=makeOrderNumber();
     const entries=cartEntries();
-    const itemLines=entries.map(({product:p,qty})=>`${qty}× ${p.name} ${p.size}${p.packageName?' · '+p.packageName:''} — ${peso(p.price*qty)}`).join('\n');
-    const itemData=entries.map(({product:p,qty,key})=>({id:p.id,cartKey:key,code:p.code,name:p.name,size:p.size,package:p.packageName||'',price:p.price,qty,lineTotal:p.price*qty}));
-    lastOrderSummary=`PEPTIQUE BEAUTY PH\nOrder: ${orderNo}\n\n${itemLines}\n\nSubtotal: ${peso(totals.sub)}\nShipping: ${totals.shipText}\nTotal: ${peso(totals.total)}\n\nCustomer: ${fd.get('fullName')}\nContact: ${fd.get('contact')}\nEmail: ${fd.get('email')||'—'}\nAddress: ${fd.get('address')}, ${fd.get('barangay')}, ${fd.get('city')}, ${fd.get('province')}\nLandmark: ${fd.get('landmark')||'—'}\nDelivery: ${fd.get('deliveryMethod')}${fd.get('region')?' — '+fd.get('region'):''}\nPayment: ${fd.get('paymentMethod')}\nNotes: ${fd.get('notes')||'—'}`;
+    const packagingChoice=String(fd.get('packagingMethod')||'Complete Set');
+    const itemLines=entries.map(({product:p,qty})=>`${qty}× ${p.name} ${p.size}${packagingChoice==='Vial + BAC Water only'&&isVialDiscountEligible(p)?' · Vial + BAC Water only':''} — ${peso(p.price*qty)}`).join('\n');
+    const itemData=entries.map(({product:p,qty,key})=>({id:p.id,cartKey:key,code:p.code,name:p.name,size:p.size,package:packagingChoice==='Vial + BAC Water only'&&isVialDiscountEligible(p)?'Vial + BAC Water only':'Complete Set',price:p.price,qty,lineTotal:p.price*qty}));
+    lastOrderSummary=`PEPTIQUE BEAUTY PH\nOrder: ${orderNo}\n\n${itemLines}\n\nItems subtotal: ${peso(totals.sub)}\nPackaging: ${packagingChoice}\nPackaging discount: ${totals.discount?'-'+peso(totals.discount):'—'}\nShipping: ${totals.shipText}\nTotal: ${peso(totals.total)}\n\nCustomer: ${fd.get('fullName')}\nContact: ${fd.get('contact')}\nEmail: ${fd.get('email')||'—'}\nAddress: ${fd.get('address')}, ${fd.get('barangay')}, ${fd.get('city')}, ${fd.get('province')}\nLandmark: ${fd.get('landmark')||'—'}\nDelivery: ${fd.get('deliveryMethod')}${fd.get('region')?' — '+fd.get('region'):''}\nPayment: ${fd.get('paymentMethod')}\nNotes: ${fd.get('notes')||'—'}`;
 
     const receipt=await fileToPayload(receiptFile);
     const payload={
@@ -334,7 +346,7 @@ form.addEventListener('submit',async e=>{
       customer:{fullName:fd.get('fullName'),contact:fd.get('contact'),email:fd.get('email')||'',address:fd.get('address'),barangay:fd.get('barangay'),city:fd.get('city'),province:fd.get('province'),landmark:fd.get('landmark')||''},
       delivery:{method:fd.get('deliveryMethod'),region:fd.get('region')||'',shippingFee:totals.ship,shippingText:totals.shipText},
       payment:{method:fd.get('paymentMethod'),status:receiptFile?'Paid - To verify':'Payment selected - receipt not uploaded'},
-      items:itemData,itemsText:itemLines,subtotal:totals.sub,total:totals.total,notes:fd.get('notes')||'',orderSummary:lastOrderSummary,receipt
+      items:itemData,itemsText:itemLines,subtotal:totals.netSubtotal,total:totals.total,notes:[`Packaging: ${packagingChoice}`,totals.discount?`Packaging discount: -${peso(totals.discount)}`:'',fd.get('notes')||''].filter(Boolean).join(' | '),orderSummary:lastOrderSummary,receipt
     };
 
     const r=await fetch(ORDER_ENDPOINT,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload)});
@@ -348,6 +360,6 @@ form.addEventListener('submit',async e=>{
   }finally{submitButton.disabled=false;submitButton.textContent=originalText;}
 });
 document.querySelector('#copy-order').addEventListener('click',async()=>{try{await navigator.clipboard.writeText(lastOrderSummary);toast('Order summary copied ♡')}catch{toast('Copy unavailable — screenshot your order number instead')}});
-document.querySelector('#continue-shopping').addEventListener('click',()=>{document.querySelector('#success-modal').hidden=true;cart={};saveCart();form.reset();panel.hidden=true;document.querySelector('#file-name').textContent='Choose image or PDF';document.querySelector('#shop').scrollIntoView({behavior:'smooth'})});
+document.querySelector('#continue-shopping').addEventListener('click',()=>{document.querySelector('#success-modal').hidden=true;cart={};saveCart();form.reset();if(packaging)packaging.value='Complete Set';panel.hidden=true;document.querySelector('#file-name').textContent='Choose image or PDF';document.querySelector('#shop').scrollIntoView({behavior:'smooth'})});
 
 syncCategoryFilters();renderProducts();updateCart();loadLiveStocks();

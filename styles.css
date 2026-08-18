@@ -72,3 +72,34 @@
 .discount-code-row button:disabled{opacity:.6;cursor:wait}
 #discount-code-status{display:block;margin-top:6px}
 @media(max-width:520px){.discount-code-row{grid-template-columns:1fr}.discount-code-row button{width:100%}}
+/* MOBILE CART — keep Proceed button fully tappable */
+@media (max-width: 720px) {
+  .cart-drawer {
+    height: 100dvh;
+    max-height: 100dvh;
+    padding-bottom: calc(18px + env(safe-area-inset-bottom, 0px));
+    overflow: hidden;
+  }
+
+  .cart-items {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .cart-totals {
+    flex: 0 0 auto;
+  }
+
+  #proceed-checkout {
+    position: relative;
+    z-index: 5;
+    flex: 0 0 auto;
+    width: 100%;
+    min-height: 50px;
+    margin-top: 8px;
+    touch-action: manipulation;
+    pointer-events: auto;
+  }
+}

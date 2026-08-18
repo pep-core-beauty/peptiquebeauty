@@ -91,8 +91,21 @@ function renderProducts(){
   const groups=productGroups(visible);
   grid.innerHTML=groups.map(g=>{
     const codes=g.variants.map(v=>v.code).join(' / ');
-    const rows=g.variants.map(v=>`<div class="variant-row"><div class="variant-info"><b>${variantLabel(v,g)}</b><span>${peso(v.price)}</span></div><div class="shop-stepper"><button type="button" data-shop-qty="${v.id}" data-delta="-1">−</button><span data-shop-count="${v.id}">${shopQty[v.id]||0}</span><button type="button" data-shop-qty="${v.id}" data-delta="1">+</button></div></div>`).join('');
-    return `<article class="product-card grouped-card"><span class="product-tag">${g.category.toUpperCase()}${g.variants.length===1?' • '+codes:''}</span><h3>${g.name}</h3>${g.variants.length>1?`<p class="product-meta">Choose strength & quantity</p>`:`<p class="product-meta">Select quantity</p>`}<div class="variant-list">${rows}</div><button class="add-button group-add" type="button" data-add-group="${g.key}">ADD SELECTED TO BAG</button></article>`;
+    const priceMin=Math.min(...g.variants.map(v=>v.price));
+    const priceMax=Math.max(...g.variants.map(v=>v.price));
+    const priceText=priceMin===priceMax?peso(priceMin):`${peso(priceMin)} – ${peso(priceMax)}`;
+    const rows=g.variants.map(v=>`<div class="variant-row"><div class="variant-info"><b>${variantLabel(v,g)}</b><span>${peso(v.price)}</span></div><div class="shop-stepper"><button type="button" data-shop-qty="${v.id}" data-delta="-1" aria-label="Decrease ${v.name} ${v.size}">−</button><span data-shop-count="${v.id}">${shopQty[v.id]||0}</span><button type="button" data-shop-qty="${v.id}" data-delta="1" aria-label="Increase ${v.name} ${v.size}">+</button></div></div>`).join('');
+    return `<article class="product-card grouped-card collapsed" data-product-group="${g.key}">
+      <div class="product-card-summary" data-toggle-group="${g.key}" role="button" tabindex="0" aria-expanded="false">
+        <div><span class="product-tag">${g.category.toUpperCase()}${g.variants.length===1?' • '+codes:''}</span><h3>${g.name}</h3><p class="product-meta">${g.variants.length>1?'From '+priceText:priceText}</p></div>
+        <span class="product-open-label">VIEW OPTIONS <b>＋</b></span>
+      </div>
+      <div class="product-options" hidden>
+        <p class="options-note">${g.variants.length>1?'Choose strength & quantity':'Select quantity'}</p>
+        <div class="variant-list">${rows}</div>
+        <button class="add-button group-add" type="button" data-add-group="${g.key}">ADD SELECTED TO BAG</button>
+      </div>
+    </article>`;
   }).join('');
   document.querySelector('#no-results').hidden=!!groups.length;
 }
@@ -110,6 +123,19 @@ function openCart(){document.querySelector('.cart-drawer').classList.add('open')
 function closeCart(){document.querySelector('.cart-drawer').classList.remove('open');document.querySelector('.cart-drawer').setAttribute('aria-hidden','true');document.querySelector('.drawer-backdrop').classList.remove('open')}
 
 document.addEventListener('click',e=>{
+  const toggle=e.target.closest('[data-toggle-group]');
+  if(toggle){
+    const card=toggle.closest('[data-product-group]');
+    const options=card?.querySelector('.product-options');
+    const isOpen=card?.classList.contains('open');
+    if(card&&options){
+      card.classList.toggle('open',!isOpen);card.classList.toggle('collapsed',isOpen);
+      options.hidden=isOpen;toggle.setAttribute('aria-expanded',String(!isOpen));
+      const icon=toggle.querySelector('.product-open-label b');if(icon)icon.textContent=isOpen?'＋':'−';
+      const label=toggle.querySelector('.product-open-label');if(label)label.childNodes[0].nodeValue=isOpen?'VIEW OPTIONS ':'HIDE OPTIONS ';
+    }
+    return;
+  }
   const shopStep=e.target.closest('[data-shop-qty]');
   if(shopStep){
     const id=shopStep.dataset.shopQty;
@@ -130,6 +156,8 @@ document.addEventListener('click',e=>{
   const rem=e.target.closest('[data-remove]');if(rem){delete cart[rem.dataset.remove];saveCart();return}
   if(e.target.closest('[data-open-cart]'))openCart(); if(e.target.closest('[data-close-cart]'))closeCart();
 });
+
+document.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.matches('[data-toggle-group]')){e.preventDefault();e.target.click();}});
 
 document.querySelectorAll('.filter').forEach(b=>b.addEventListener('click',()=>{activeFilter=b.dataset.filter;document.querySelectorAll('.filter').forEach(x=>x.classList.toggle('active',x===b));renderProducts()}));
 search.addEventListener('input',renderProducts);
@@ -175,6 +203,8 @@ async function fileToPayload(file){
 form.addEventListener('submit',async e=>{
   e.preventDefault();
   if(!cartEntries().length)return;
+  const receiptFile=document.querySelector('#receipt').files?.[0];
+  if(!receiptFile){toast('Please upload your payment receipt before submitting.');document.querySelector('#receipt').focus();return}
   if(!ORDER_ENDPOINT || ORDER_ENDPOINT.includes('PASTE_YOUR_')){toast('Checkout connection is not deployed yet.');return}
 
   const submitButton=form.querySelector('button[type="submit"]');
@@ -190,7 +220,7 @@ form.addEventListener('submit',async e=>{
     const itemData=entries.map(({product:p,qty})=>({id:p.id,code:p.code,name:p.name,size:p.size,price:p.price,qty,lineTotal:p.price*qty}));
     lastOrderSummary=`PEPTIQUE BEAUTY PH\nOrder: ${orderNo}\n\n${itemLines}\n\nSubtotal: ${peso(totals.sub)}\nShipping: ${totals.shipText}\nTotal: ${peso(totals.total)}\n\nCustomer: ${fd.get('fullName')}\nContact: ${fd.get('contact')}\nEmail: ${fd.get('email')||'—'}\nAddress: ${fd.get('address')}, ${fd.get('barangay')}, ${fd.get('city')}, ${fd.get('province')}\nLandmark: ${fd.get('landmark')||'—'}\nDelivery: ${fd.get('deliveryMethod')}${fd.get('region')?' — '+fd.get('region'):''}\nPayment: ${fd.get('paymentMethod')}\nNotes: ${fd.get('notes')||'—'}`;
 
-    const receipt=await fileToPayload(document.querySelector('#receipt').files?.[0]);
+    const receipt=await fileToPayload(receiptFile);
     const payload={
       orderNumber:orderNo,
       customer:{fullName:fd.get('fullName'),contact:fd.get('contact'),email:fd.get('email')||'',address:fd.get('address'),barangay:fd.get('barangay'),city:fd.get('city'),province:fd.get('province'),landmark:fd.get('landmark')||''},

@@ -174,13 +174,19 @@ document.querySelector('#proceed-checkout').addEventListener('click',openCheckou
 const delivery=document.querySelector('#delivery-method'),region=document.querySelector('#region'),regionLabel=document.querySelector('#region-label'),deliveryNote=document.querySelector('#delivery-note');
 function recalcCheckout(){
   const sub=subtotal();let ship=0;let shipText='—';
-  if(delivery.value==='Lalamove'){shipText='Paid to rider';deliveryNote.hidden=false;deliveryNote.textContent='Lalamove delivery fee is paid directly to the rider upon delivery and is not included in your store total.';regionLabel.hidden=true;region.required=false;}
-  else if(delivery.value==='J&T'){regionLabel.hidden=false;region.required=true;deliveryNote.hidden=false;deliveryNote.textContent='J&T shipping is added to your order total.';if(region.value){ship=shippingRates[region.value]||0;shipText=peso(ship)}}
+  const deliveryMethod=(delivery.value||'').trim();
+  const selectedRegion=(region.value||'').trim();
+  if(deliveryMethod==='Lalamove'){shipText='Paid to rider';deliveryNote.hidden=false;deliveryNote.textContent='Lalamove delivery fee is paid directly to the rider upon delivery and is not included in your store total.';regionLabel.hidden=true;region.required=false;}
+  else if(deliveryMethod.startsWith('J&T')){regionLabel.hidden=false;region.required=true;deliveryNote.hidden=false;deliveryNote.textContent='J&T shipping is added to your order total.';if(selectedRegion){ship=Number(shippingRates[selectedRegion]||0);shipText=peso(ship)}}
   else{regionLabel.hidden=true;region.required=false;deliveryNote.hidden=true}
   document.querySelector('#checkout-subtotal').textContent=peso(sub);document.querySelector('#checkout-shipping').textContent=shipText;document.querySelector('#checkout-total').textContent=peso(sub+ship);
   return {sub,ship,total:sub+ship,shipText};
 }
-delivery.addEventListener('change',()=>{if(delivery.value!=='J&T')region.value='';recalcCheckout()});region.addEventListener('change',recalcCheckout);
+function handleDeliveryChange(){if(!(delivery.value||'').startsWith('J&T'))region.value='';recalcCheckout()}
+delivery.addEventListener('change',handleDeliveryChange);
+delivery.addEventListener('input',handleDeliveryChange);
+region.addEventListener('change',recalcCheckout);
+region.addEventListener('input',recalcCheckout);
 
 const payment=document.querySelector('#payment-method'),panel=document.querySelector('#payment-panel'),qr=document.querySelector('#payment-qr'),paymentName=document.querySelector('#payment-name');
 payment.addEventListener('change',()=>{if(payment.value&&paymentQR[payment.value]){qr.src=paymentQR[payment.value];paymentName.textContent=payment.value;panel.hidden=false}else panel.hidden=true});
@@ -203,8 +209,7 @@ async function fileToPayload(file){
 form.addEventListener('submit',async e=>{
   e.preventDefault();
   if(!cartEntries().length)return;
-  const receiptFile=document.querySelector('#receipt').files?.[0];
-  if(!receiptFile){toast('Please upload your payment receipt before submitting.');document.querySelector('#receipt').focus();return}
+  const receiptFile=document.querySelector('#receipt').files?.[0]||null;
   if(!ORDER_ENDPOINT || ORDER_ENDPOINT.includes('PASTE_YOUR_')){toast('Checkout connection is not deployed yet.');return}
 
   const submitButton=form.querySelector('button[type="submit"]');
@@ -213,7 +218,8 @@ form.addEventListener('submit',async e=>{
 
   try{
     const fd=new FormData(form); const totals=recalcCheckout();
-    if(fd.get('deliveryMethod')==='J&T'&&!fd.get('region')){throw new Error('Select your J&T destination.')}
+    if(String(fd.get('deliveryMethod')||'').startsWith('J&T')&&!fd.get('region')){throw new Error('Select your J&T destination.')}
+    if(String(fd.get('deliveryMethod')||'').startsWith('J&T') && totals.ship<=0){throw new Error('Please select your J&T destination so the shipping fee can be added.')} 
     const orderNo=makeOrderNumber();
     const entries=cartEntries();
     const itemLines=entries.map(({product:p,qty})=>`${qty}× ${p.name} ${p.size} — ${peso(p.price*qty)}`).join('\n');
@@ -225,7 +231,7 @@ form.addEventListener('submit',async e=>{
       orderNumber:orderNo,
       customer:{fullName:fd.get('fullName'),contact:fd.get('contact'),email:fd.get('email')||'',address:fd.get('address'),barangay:fd.get('barangay'),city:fd.get('city'),province:fd.get('province'),landmark:fd.get('landmark')||''},
       delivery:{method:fd.get('deliveryMethod'),region:fd.get('region')||'',shippingFee:totals.ship,shippingText:totals.shipText},
-      payment:{method:fd.get('paymentMethod'),status:'Paid - To verify'},
+      payment:{method:fd.get('paymentMethod'),status:receiptFile?'Paid - To verify':'Payment selected - receipt not uploaded'},
       items:itemData,itemsText:itemLines,subtotal:totals.sub,total:totals.total,notes:fd.get('notes')||'',orderSummary:lastOrderSummary,receipt
     };
 

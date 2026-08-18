@@ -93,7 +93,7 @@
         <article><b>01</b><h3>Add to bag</h3><p>Choose your items and quantities, then review your bag.</p></article>
         <article><b>02</b><h3>Enter delivery details</h3><p>Select Lalamove or J&T and your destination region.</p></article>
         <article><b>03</b><h3>Pay first</h3><p>Choose GCash, GoTyme, or MariBank and scan the displayed QR.</p></article>
-        <article><b>04</b><h3>Send your order</h3><p>Upload your payment receipt and keep your generated order number.</p></article>
+        <article><b>04</b><h3>Send your order</h3><p>Submit your order and keep your generated order number. Receipt upload is optional.</p></article>
       </div>
       <div class="shipping-card">
         <div><p class="eyebrow">J&T SHIPPING</p><h3>Simple regional rates</h3><p>Rates are added to your checkout total. Lalamove is paid directly to the rider upon delivery.</p></div>
@@ -152,10 +152,10 @@
           <label class="span-2">PAYMENT METHOD<select name="paymentMethod" id="payment-method" required><option value="">Select a payment method</option><option value="GCash">GCash</option><option value="GoTyme Bank">GoTyme Bank</option><option value="MariBank">MariBank</option></select></label>
           <div id="payment-panel" class="payment-panel span-2" hidden><p>Scan to pay your order total:</p><img id="payment-qr" alt="Selected payment QR code" /><p id="payment-name"></p></div>
           <label class="span-2">ORDER NOTES <small>(optional)</small><textarea name="notes" rows="2" placeholder="Anything we should know?"></textarea></label>
-          <label class="span-2 file-label">PAYMENT RECEIPT<input name="receipt" id="receipt" type="file" accept="image/*,.pdf" /><span id="file-name">Choose image or PDF</span></label>
+          <label class="span-2 file-label">PAYMENT RECEIPT <small>(optional)</small><input name="receipt" id="receipt" type="file" accept="image/*,.pdf" /><span id="file-name">Choose image or PDF</span></label>
         </div>
         <div class="checkout-summary"><div><span>Items</span><b id="checkout-subtotal">₱0</b></div><div><span>Shipping</span><b id="checkout-shipping">—</b></div><div class="grand-total"><span>Total</span><b id="checkout-total">₱0</b></div></div>
-        <div class="notice">Strictly payment first. Please make sure the payment amount matches your checkout total before submitting.</div>
+        <div class="notice">Strictly payment first. Please make sure the payment amount matches your checkout total. Receipt upload is optional and can be sent separately if needed.</div>
         <button class="button button-primary full" type="submit">SUBMIT ORDER</button>
         <p class="form-disclaimer">Your order is saved to Peptique Beauty’s private order sheet only after a successful submission. Keep the generated order number for reference.</p>
       </form>

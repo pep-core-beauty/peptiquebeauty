@@ -159,6 +159,22 @@ function variantLabel(p, group){
 }
 function renderProducts(){
   const q=(search.value||'').trim().toLowerCase();
+    let topicalNotice = document.querySelector('#topical-disclaimer');
+
+  if (!topicalNotice) {
+    topicalNotice = document.createElement('div');
+    topicalNotice.id = 'topical-disclaimer';
+    topicalNotice.className = 'topical-disclaimer';
+
+    topicalNotice.innerHTML = `
+      <strong>🎀 TOPICAL USE ONLY</strong>
+      <span>Products in this category are intended for topical application only and are <b>not for injection.</b></span>
+    `;
+
+    grid.insertAdjacentElement('beforebegin', topicalNotice);
+  }
+
+  topicalNotice.hidden = activeFilter !== 'Topicals';
   const visible=products.filter(p => (activeFilter==='All'||p.category===activeFilter) && `${p.name} ${p.code} ${p.size}`.toLowerCase().includes(q));
   const groups=productGroups(visible);
   grid.innerHTML=groups.map(g=>{

@@ -1,0 +1,10 @@
+Upload these files directly to the ROOT of your GitHub repository (beside index.html):
+- index.html
+- styles.css
+- app.js
+- gcash-qr.jpg
+- gotyme-qr.jpg
+- maribank-qr.jpg
+
+Allow GitHub to replace existing files with the same names.
+No assets folder is required for this version.

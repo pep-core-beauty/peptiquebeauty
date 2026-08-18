@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#7b0f22" />
+  <meta name="description" content="Peptique Beauty PH — premium beauty & wellness collection in Quezon City." />
+  <title>Peptique Beauty PH</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="announcement">PEPTIQUE BEAUTY PH • QUEZON CITY • SAME-DAY SHIPPING FOR CONFIRMED & PAID ORDERS BEFORE CUT-OFF</div>
+
+  <header class="site-header" id="home">
+    <a class="brand" href="#home" aria-label="Peptique Beauty PH home">
+      <span class="brand-monogram">PB</span>
+      <span class="brand-copy"><strong>PEPTIQUE</strong><small>BEAUTY PH</small></span>
+    </a>
+    <button class="nav-toggle" type="button" aria-label="Open menu" aria-expanded="false">☰</button>
+    <nav class="nav" aria-label="Main navigation">
+      <a href="#home">HOME</a>
+      <a href="#shop">SHOP</a>
+      <a href="#collections">COLLECTIONS</a>
+      <a href="#how-to-order">HOW TO ORDER</a>
+      <a href="#faq">FAQ</a>
+    </nav>
+    <button class="cart-button" type="button" data-open-cart>Bag <span class="cart-count">0</span></button>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="hero-decoration hero-decoration-left">♡</div>
+      <div class="hero-decoration hero-decoration-right">✦</div>
+      <div class="hero-copy">
+        <p class="eyebrow">ELEVATE • GLOW • BECOME</p>
+        <h1>Beauty, curated<br><em>the Peptique way.</em></h1>
+        <p class="hero-lead">A romantic little corner for our current beauty & wellness collection, with straightforward pricing and easy checkout.</p>
+        <div class="hero-actions">
+          <a class="button button-primary" href="#shop">SHOP COLLECTION</a>
+          <a class="button button-ghost" href="#how-to-order">HOW TO ORDER</a>
+        </div>
+        <div class="hero-badges">
+          <span>♡ Payment first</span><span>♡ Same-day dispatch</span><span>♡ Quezon City</span>
+        </div>
+      </div>
+      <div class="hero-card" aria-hidden="true">
+        <div class="bow">୨୧</div>
+        <div class="hero-monogram">PB</div>
+        <p>PEPTIQUE</p><small>BEAUTY PH</small>
+        <div class="lotus">𓆸</div>
+      </div>
+    </section>
+
+    <section class="section" id="collections">
+      <div class="section-heading center">
+        <p class="eyebrow">SHOP BY COLLECTION</p>
+        <h2>Pick your pretty.</h2>
+        <p>Browse Peptique's current on-hand catalog.</p>
+      </div>
+      <div class="collection-grid">
+        <button class="collection-card" data-category-jump="Injectables"><span>01</span><strong>Injectables</strong><small>View collection →</small></button>
+        <button class="collection-card" data-category-jump="Topicals"><span>02</span><strong>Topicals</strong><small>View collection →</small></button>
+        <button class="collection-card" data-category-jump="Accessories"><span>03</span><strong>Accessories</strong><small>View collection →</small></button>
+        <button class="collection-card" data-category-jump="Supplies"><span>04</span><strong>Supplies</strong><small>View collection →</small></button>
+      </div>
+    </section>
+
+    <section class="section shop-section" id="shop">
+      <div class="section-heading split">
+        <div><p class="eyebrow">CURRENT COLLECTION</p><h2>Shop All</h2></div>
+        <p class="stock-note"><span></span> current on-hand list</p>
+      </div>
+      <div class="shop-tools">
+        <div class="filters" role="group" aria-label="Product filters">
+          <button class="filter active" data-filter="All">All</button>
+          <button class="filter" data-filter="Injectables">Injectables</button>
+          <button class="filter" data-filter="Topicals">Topicals</button>
+          <button class="filter" data-filter="Accessories">Accessories</button>
+          <button class="filter" data-filter="Supplies">Supplies</button>
+        </div>
+        <label class="search-wrap"><span>⌕</span><input id="product-search" type="search" placeholder="Search products..." autocomplete="off" /></label>
+      </div>
+      <div id="product-grid" class="product-grid" aria-live="polite"></div>
+      <p id="no-results" class="no-results" hidden>No products found. Try another search or collection.</p>
+    </section>
+
+    <section class="section order-info" id="how-to-order">
+      <div class="section-heading center">
+        <p class="eyebrow">A LITTLE ORDER RITUAL</p>
+        <h2>How to order</h2>
+      </div>
+      <div class="steps">
+        <article><b>01</b><h3>Add to bag</h3><p>Choose your items and quantities, then review your bag.</p></article>
+        <article><b>02</b><h3>Enter delivery details</h3><p>Select Lalamove or J&T and your destination region.</p></article>
+        <article><b>03</b><h3>Pay first</h3><p>Choose GCash, GoTyme, or MariBank and scan the displayed QR.</p></article>
+        <article><b>04</b><h3>Send your order</h3><p>Upload your payment receipt and keep your generated order number.</p></article>
+      </div>
+      <div class="shipping-card">
+        <div><p class="eyebrow">J&T SHIPPING</p><h3>Simple regional rates</h3><p>Rates are added to your checkout total. Lalamove is paid directly to the rider upon delivery.</p></div>
+        <div class="rates"><span><b>₱100</b>Metro Manila</span><span><b>₱150</b>Luzon</span><span><b>₱200</b>Visayas</span><span><b>₱250</b>Mindanao</span></div>
+      </div>
+    </section>
+
+    <section class="section payment-preview">
+      <div class="section-heading center"><p class="eyebrow">PAYMENT FIRST</p><h2>Choose what works for you.</h2><p>GCash · GoTyme Bank · MariBank</p></div>
+      <div class="payment-pills"><span>GCash</span><span>GoTyme Bank</span><span>MariBank</span></div>
+    </section>
+
+    <section class="section faq" id="faq">
+      <div class="section-heading center"><p class="eyebrow">FAQ</p><h2>Before you checkout</h2></div>
+      <details><summary>How much is shipping?</summary><p>J&T: Metro Manila ₱100, Luzon ₱150, Visayas ₱200, Mindanao ₱250. Lalamove delivery fees are paid directly to the rider and are not added to your website total.</p></details>
+      <details><summary>When will my order ship?</summary><p>Confirmed and paid orders received before the daily cut-off may be shipped on the same day. Courier timing can still vary.</p></details>
+      <details><summary>Do you accept cash on delivery?</summary><p>No. Peptique Beauty PH follows a strictly payment-first policy prior to shipping.</p></details>
+      <details><summary>Are reseller discounts applied here?</summary><p>No. The prices shown on this website are the listed set prices. Reseller discounts are not applied on this storefront.</p></details>
+      <details><summary>Is this medical advice?</summary><p>No. Product information on this storefront is for catalog and ordering purposes only and is not medical advice. Use products only as appropriate and with guidance from a qualified healthcare professional where applicable.</p></details>
+    </section>
+  </main>
+
+  <footer>
+    <div class="footer-bow">୨୧</div>
+    <div class="footer-brand">PEPTIQUE <span>BEAUTY PH</span></div>
+    <p>Elevate • Glow • Become ♡</p>
+    <div class="footer-grid"><div><b>PAYMENT</b><span>GCash · GoTyme · MariBank</span></div><div><b>DELIVERY</b><span>Lalamove · J&T Express</span></div><div><b>ORDER CARE</b><span>Please double-check your details before submitting.</span></div></div>
+    <small>© 2026 Peptique Beauty PH · Quezon City · Made with ♡</small>
+  </footer>
+
+  <div class="drawer-backdrop" data-close-cart></div>
+  <aside class="cart-drawer" aria-label="Shopping bag" aria-hidden="true">
+    <div class="drawer-head"><div><p class="eyebrow">YOUR PEPTIQUE BAG</p><h2>Your Cart</h2></div><button class="icon-button" data-close-cart aria-label="Close cart">×</button></div>
+    <div id="cart-items" class="cart-items"></div>
+    <div class="cart-totals"><div><span>Subtotal</span><b id="cart-subtotal">₱0</b></div><div><span>Shipping</span><b id="cart-shipping">Select at checkout</b></div><div class="grand-total"><span>Total</span><b id="cart-total">₱0</b></div></div>
+    <button class="button button-primary full" id="proceed-checkout">PROCEED TO ORDER</button>
+  </aside>
+
+  <div class="modal-backdrop" id="checkout-backdrop"></div>
+  <section class="checkout-modal" id="checkout-modal" role="dialog" aria-modal="true" aria-labelledby="checkout-title" hidden>
+    <div class="checkout-card">
+      <div class="drawer-head"><div><p class="eyebrow">CHECKOUT</p><h2 id="checkout-title">Order Details</h2></div><button class="icon-button" id="close-checkout" aria-label="Close checkout">×</button></div>
+      <form id="checkout-form">
+        <div class="form-grid">
+          <label class="span-2">FULL NAME<input name="fullName" required placeholder="Customer name" /></label>
+          <label>CONTACT NUMBER<input name="contact" required inputmode="tel" placeholder="09xx xxx xxxx" /></label>
+          <label>EMAIL <small>(optional)</small><input name="email" type="email" placeholder="name@example.com" /></label>
+          <label>BARANGAY<input name="barangay" required placeholder="Barangay" /></label>
+          <label>CITY / MUNICIPALITY<input name="city" required placeholder="City / Municipality" /></label>
+          <label>PROVINCE<input name="province" required placeholder="Province" /></label>
+          <label class="span-2">FULL DELIVERY ADDRESS<textarea name="address" required rows="2" placeholder="House / unit / street / subdivision"></textarea></label>
+          <label class="span-2">LANDMARK <small>(optional)</small><input name="landmark" placeholder="Nearby landmark" /></label>
+          <label>DELIVERY METHOD<select name="deliveryMethod" id="delivery-method" required><option value="">Select</option><option value="Lalamove">Lalamove</option><option value="J&T">J&T Express</option></select></label>
+          <label id="region-label" hidden>J&T DESTINATION<select name="region" id="region"><option value="">Select region</option><option value="Metro Manila">Metro Manila — ₱100</option><option value="Luzon">Luzon — ₱150</option><option value="Visayas">Visayas — ₱200</option><option value="Mindanao">Mindanao — ₱250</option></select></label>
+          <div id="delivery-note" class="notice span-2" hidden></div>
+          <label class="span-2">PAYMENT METHOD<select name="paymentMethod" id="payment-method" required><option value="">Select a payment method</option><option value="GCash">GCash</option><option value="GoTyme Bank">GoTyme Bank</option><option value="MariBank">MariBank</option></select></label>
+          <div id="payment-panel" class="payment-panel span-2" hidden><p>Scan to pay your order total:</p><img id="payment-qr" alt="Selected payment QR code" /><p id="payment-name"></p></div>
+          <label class="span-2">ORDER NOTES <small>(optional)</small><textarea name="notes" rows="2" placeholder="Anything we should know?"></textarea></label>
+          <label class="span-2 file-label">PAYMENT RECEIPT<input name="receipt" id="receipt" type="file" accept="image/*,.pdf" required /><span id="file-name">Choose image or PDF</span></label>
+        </div>
+        <div class="checkout-summary"><div><span>Items</span><b id="checkout-subtotal">₱0</b></div><div><span>Shipping</span><b id="checkout-shipping">—</b></div><div class="grand-total"><span>Total</span><b id="checkout-total">₱0</b></div></div>
+        <div class="notice">Strictly payment first. Please make sure the payment amount matches your checkout total before submitting.</div>
+        <button class="button button-primary full" type="submit">SUBMIT ORDER</button>
+        <p class="form-disclaimer">Your order is saved to Peptique Beauty’s private order sheet only after a successful submission. Keep the generated order number for reference.</p>
+      </form>
+    </div>
+  </section>
+
+  <section class="success-modal" id="success-modal" role="dialog" aria-modal="true" hidden>
+    <div class="success-card"><div class="success-icon">✓</div><p class="eyebrow">ORDER RECEIVED</p><h2>Thank you, gorgeous.</h2><p>Your order has been prepared as a confirmation summary.</p><div class="order-number"><span>ORDER NUMBER</span><b id="order-number"></b></div><p>Please keep your order number for reference.</p><button class="button button-primary" id="copy-order">COPY ORDER SUMMARY</button><button class="button button-ghost" id="continue-shopping">CONTINUE SHOPPING</button></div>
+  </section>
+
+  <script src="app.js"></script>
+</body>
+</html>

@@ -147,4 +147,39 @@
     width: 100%;
   }
 }
+/* TOPICAL CATEGORY DISCLAIMER */
+.topical-disclaimer {
+  margin: 18px 0 24px;
+  padding: 16px 20px;
+  border: 1px solid #efc3cc;
+  border-radius: 18px;
+  background: #fff7f8;
+  color: #7b0f22;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.topical-disclaimer strong {
+  white-space: nowrap;
+  letter-spacing: 0.08em;
+  font-size: 12px;
+}
+
+.topical-disclaimer span {
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.topical-disclaimer[hidden] {
+  display: none !important;
+}
+
+@media (max-width: 600px) {
+  .topical-disclaimer {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 5px;
+  }
+}
 

@@ -52,3 +52,9 @@
   .purchase-option-top strong{font-size:16px}
   .variant-add{font-size:9px;padding-left:8px;padding-right:8px}
 }
+
+/* Live Google Sheet stock state */
+.purchase-option.sold-out{opacity:.62}
+.purchase-option.sold-out .purchase-option-top strong{text-decoration:line-through}
+.variant-add:disabled{cursor:not-allowed;background:#cbb9bd;color:#fff;filter:none}
+.shop-stepper button:disabled{cursor:not-allowed;opacity:.42}

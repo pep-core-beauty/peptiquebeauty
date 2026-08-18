@@ -61,6 +61,36 @@ const products = [
 ];
 
 const shippingRates = {'Metro Manila':100,'Luzon':150,'Visayas':200,'Mindanao':250};
+
+// Live pricing + availability are loaded from the Google Sheet tab named "Stocks".
+// Hard-coded values above are only fallbacks if the live feed is temporarily unavailable.
+const stockKey = (category, code) => `${String(category||'').toLowerCase().replace(/[^a-z0-9]/g,'')}|${String(code||'').toLowerCase().replace(/[^a-z0-9]/g,'')}`;
+products.forEach(p => { p.inStock = true; });
+let stockFeedReady = false;
+
+async function loadLiveStocks(){
+  try{
+    const url = `${ORDER_ENDPOINT}?action=stocks&_=${Date.now()}`;
+    const r = await fetch(url, {cache:'no-store'});
+    const data = await r.json();
+    if(!r.ok || data.ok !== true || !Array.isArray(data.stocks)) throw new Error(data.message || 'Stock feed unavailable.');
+    const live = new Map(data.stocks.map(row => [stockKey(row.category,row.code), row]));
+    products.forEach(p => {
+      const row = live.get(stockKey(p.category,p.code));
+      if(!row) return;
+      const livePrice = Number(row.setPrice);
+      if(Number.isFinite(livePrice) && livePrice >= 0) p.price = livePrice;
+      p.inStock = row.inStock === true;
+    });
+    stockFeedReady = true;
+    renderProducts();
+    updateCart();
+  }catch(err){
+    console.warn('Peptique live stock feed:', err);
+    // Keep the storefront usable with the last embedded prices if Google is temporarily unreachable.
+  }
+}
+
 const paymentQR = {'GCash':'gcash-qr.jpg','GoTyme Bank':'gotyme-qr.jpg','MariBank':'maribank-qr.jpg'};
 let cart = JSON.parse(localStorage.getItem('peptiqueCart') || '{}');
 let activeFilter = 'All';
@@ -76,10 +106,10 @@ function hasVialBacOption(p){
 }
 function purchaseOptions(p){
   if(hasVialBacOption(p)) return [
-    {key:`${p.id}::SET`,label:'Complete Set',price:p.price},
-    {key:`${p.id}::VBW`,label:'Vial + BAC Water only',price:Math.max(0,p.price-200)}
+    {key:`${p.id}::SET`,label:'Complete Set',price:p.price,inStock:p.inStock},
+    {key:`${p.id}::VBW`,label:'Vial + BAC Water only',price:Math.max(0,p.price-200),inStock:p.inStock}
   ];
-  return [{key:p.id,label:'Standard',price:p.price}];
+  return [{key:p.id,label:'Standard',price:p.price,inStock:p.inStock}];
 }
 function resolveCartItem(key){
   const [id,mode]=String(key).split('::');
@@ -117,11 +147,13 @@ function renderProducts(){
       const optionRows=options.map(opt=>{
         const qty=shopQty[opt.key] ?? 1; shopQty[opt.key]=qty;
         const standard=options.length===1;
-        return `<div class="purchase-option ${standard?'single-option':''}">
+        const disabled=opt.inStock?'':' disabled';
+        const buttonText=!opt.inStock?'SOLD OUT':(standard?'ADD TO CART':opt.label==='Complete Set'?'ADD SET TO CART':'ADD VIAL + BAC WATER');
+        return `<div class="purchase-option ${standard?'single-option':''} ${opt.inStock?'':'sold-out'}">
           <div class="purchase-option-top"><span>${standard?'':opt.label}</span><strong>${peso(opt.price)}</strong></div>
           <div class="variant-card-actions">
-            <div class="shop-stepper"><button type="button" data-shop-qty="${opt.key}" data-delta="-1" aria-label="Decrease ${v.name} ${v.size}">−</button><span data-shop-count="${opt.key}">${qty}</span><button type="button" data-shop-qty="${opt.key}" data-delta="1" aria-label="Increase ${v.name} ${v.size}">+</button></div>
-            <button class="variant-add" type="button" data-add-variant="${opt.key}">${standard?'ADD TO CART':opt.label==='Complete Set'?'ADD SET TO CART':'ADD VIAL + BAC WATER'}</button>
+            <div class="shop-stepper"><button type="button" data-shop-qty="${opt.key}" data-delta="-1" aria-label="Decrease ${v.name} ${v.size}"${disabled}>−</button><span data-shop-count="${opt.key}">${qty}</span><button type="button" data-shop-qty="${opt.key}" data-delta="1" aria-label="Increase ${v.name} ${v.size}"${disabled}>+</button></div>
+            <button class="variant-add" type="button" data-add-variant="${opt.key}"${disabled}>${buttonText}</button>
           </div>
         </div>`;
       }).join('');
@@ -181,6 +213,8 @@ document.addEventListener('click',e=>{
   const variantAdd=e.target.closest('[data-add-variant]');
   if(variantAdd){
     const key=variantAdd.dataset.addVariant;
+    const item=resolveCartItem(key);
+    if(!item || item.inStock===false){toast('This option is currently sold out.');return;}
     const n=Math.max(1,shopQty[key]??1);
     cart[key]=(cart[key]||0)+n;
     shopQty[key]=1;
@@ -253,6 +287,9 @@ form.addEventListener('submit',async e=>{
   submitButton.disabled=true;submitButton.textContent='SENDING ORDER…';
 
   try{
+    await loadLiveStocks();
+    const unavailable=cartEntries().filter(({product:p})=>p.inStock===false);
+    if(unavailable.length) throw new Error(`${unavailable[0].product.name} ${unavailable[0].product.size} is currently sold out. Please remove it from your bag.`);
     const fd=new FormData(form); const totals=recalcCheckout();
     if(String(fd.get('deliveryMethod')||'').startsWith('J&T')&&!fd.get('region')){throw new Error('Select your J&T destination.')}
     if(String(fd.get('deliveryMethod')||'').startsWith('J&T') && totals.ship<=0){throw new Error('Please select your J&T destination so the shipping fee can be added.')} 
@@ -284,4 +321,4 @@ form.addEventListener('submit',async e=>{
 document.querySelector('#copy-order').addEventListener('click',async()=>{try{await navigator.clipboard.writeText(lastOrderSummary);toast('Order summary copied ♡')}catch{toast('Copy unavailable — screenshot your order number instead')}});
 document.querySelector('#continue-shopping').addEventListener('click',()=>{document.querySelector('#success-modal').hidden=true;cart={};saveCart();form.reset();panel.hidden=true;document.querySelector('#file-name').textContent='Choose image or PDF';document.querySelector('#shop').scrollIntoView({behavior:'smooth'})});
 
-renderProducts();updateCart();
+renderProducts();updateCart();loadLiveStocks();

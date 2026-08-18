@@ -274,7 +274,7 @@ if(!discountCodeInput){
   const packagingLabel=packaging?.closest('label');
   const codeLabel=document.createElement('label');
   codeLabel.className='span-2 discount-code-field';
-  codeLabel.innerHTML=`DISCOUNT CODE <div class="discount-code-row"><input id="discount-code" name="discountCode" type="text" inputmode="text" autocomplete="off" placeholder="e.g. PB400" maxlength="24"><button id="apply-discount-code" type="button">APPLY</button></div><small id="discount-code-status" class="field-help">Optional. Active PB codes change the vial-only discount per eligible vial.</small>`;
+  codeLabel.innerHTML=`DISCOUNT CODE <div class="discount-code-row"><input id="discount-code" name="discountCode" type="text" inputmode="text" autocomplete="off" placeholder="Enter discount code" maxlength="24"><button id="apply-discount-code" type="button">APPLY</button></div><small id="discount-code-status" class="field-help">Optional. Active PB codes change the vial-only discount per eligible vial.</small>`;
   packagingLabel?.insertAdjacentElement('afterend',codeLabel);
   discountCodeInput=codeLabel.querySelector('#discount-code');
   discountApplyButton=codeLabel.querySelector('#apply-discount-code');

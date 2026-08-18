@@ -7,8 +7,7 @@ const products = [
   {id:'RT10',code:'RT10',name:'Retatrutide',size:'10 MG',price:1700,category:'Injectables'},
   {id:'RT20',code:'RT20',name:'Retatrutide',size:'20 MG',price:2200,category:'Injectables'},
   {id:'RT30',code:'RT30',name:'Retatrutide',size:'30 MG',price:3100,category:'Injectables'},
-  {id:'GTT1200-A',code:'GTT 1200',name:'Glutathione Glutaone',size:'1200 MG',price:1000,category:'Injectables'},
-  {id:'GTT1200-B',code:'GTT 1200',name:'Glutathione Luthione',size:'1200 MG',price:1000,category:'Injectables'},
+  {id:'GTT1200-KR',code:'GTT 1200',name:'Glutathione Korea',size:'1200 MG',price:1000,category:'Injectables'},
   {id:'GTT1500',code:'GTT 1500',name:'Glutathione Fuan',size:'1500 MG',price:1700,category:'Injectables'},
   {id:'CU50',code:'CU50',name:'GHK-CU',size:'50 MG',price:1200,category:'Injectables'},
   {id:'CU100',code:'CU100',name:'GHK-CU',size:'100 MG',price:1700,category:'Injectables'},
@@ -71,11 +70,31 @@ const peso = n => n===0 ? 'FREE' : `₱${Number(n).toLocaleString('en-PH')}`;
 const grid = document.querySelector('#product-grid');
 const search = document.querySelector('#product-search');
 
+const shopQty = {};
+function productGroups(list){
+  const groups=[];
+  const map=new Map();
+  list.forEach(p=>{
+    const key=`${p.category}||${p.name}`;
+    if(!map.has(key)){const g={key,category:p.category,name:p.name,variants:[]};map.set(key,g);groups.push(g)}
+    map.get(key).variants.push(p);
+  });
+  return groups;
+}
+function variantLabel(p, group){
+  const sameSize=group.variants.filter(v=>v.size===p.size).length>1;
+  return sameSize ? `${p.code} · ${p.size}` : p.size;
+}
 function renderProducts(){
   const q=(search.value||'').trim().toLowerCase();
   const visible=products.filter(p => (activeFilter==='All'||p.category===activeFilter) && `${p.name} ${p.code} ${p.size}`.toLowerCase().includes(q));
-  grid.innerHTML=visible.map(p=>`<article class="product-card"><span class="product-tag">${p.category.toUpperCase()} • ${p.code}</span><h3>${p.name}</h3><p class="product-meta">${p.size}</p><div class="product-bottom"><span class="price">${peso(p.price)}</span><button class="add-button" data-add="${p.id}">ADD TO BAG</button></div></article>`).join('');
-  document.querySelector('#no-results').hidden=!!visible.length;
+  const groups=productGroups(visible);
+  grid.innerHTML=groups.map(g=>{
+    const codes=g.variants.map(v=>v.code).join(' / ');
+    const rows=g.variants.map(v=>`<div class="variant-row"><div class="variant-info"><b>${variantLabel(v,g)}</b><span>${peso(v.price)}</span></div><div class="shop-stepper"><button type="button" data-shop-qty="${v.id}" data-delta="-1">−</button><span data-shop-count="${v.id}">${shopQty[v.id]||0}</span><button type="button" data-shop-qty="${v.id}" data-delta="1">+</button></div></div>`).join('');
+    return `<article class="product-card grouped-card"><span class="product-tag">${g.category.toUpperCase()}${g.variants.length===1?' • '+codes:''}</span><h3>${g.name}</h3>${g.variants.length>1?`<p class="product-meta">Choose strength & quantity</p>`:`<p class="product-meta">Select quantity</p>`}<div class="variant-list">${rows}</div><button class="add-button group-add" type="button" data-add-group="${g.key}">ADD SELECTED TO BAG</button></article>`;
+  }).join('');
+  document.querySelector('#no-results').hidden=!!groups.length;
 }
 function saveCart(){localStorage.setItem('peptiqueCart',JSON.stringify(cart));updateCart();}
 function cartEntries(){return Object.entries(cart).map(([id,qty])=>({product:products.find(p=>p.id===id),qty})).filter(x=>x.product&&x.qty>0)}
@@ -91,6 +110,21 @@ function openCart(){document.querySelector('.cart-drawer').classList.add('open')
 function closeCart(){document.querySelector('.cart-drawer').classList.remove('open');document.querySelector('.cart-drawer').setAttribute('aria-hidden','true');document.querySelector('.drawer-backdrop').classList.remove('open')}
 
 document.addEventListener('click',e=>{
+  const shopStep=e.target.closest('[data-shop-qty]');
+  if(shopStep){
+    const id=shopStep.dataset.shopQty;
+    shopQty[id]=Math.max(0,(shopQty[id]||0)+Number(shopStep.dataset.delta));
+    const count=document.querySelector(`[data-shop-count="${id}"]`);if(count)count.textContent=shopQty[id];
+    return;
+  }
+  const groupAdd=e.target.closest('[data-add-group]');
+  if(groupAdd){
+    const group=productGroups(products).find(g=>g.key===groupAdd.dataset.addGroup);
+    let added=0;
+    (group?.variants||[]).forEach(v=>{const n=shopQty[v.id]||0;if(n>0){cart[v.id]=(cart[v.id]||0)+n;added+=n;shopQty[v.id]=0;const c=document.querySelector(`[data-shop-count="${v.id}"]`);if(c)c.textContent='0'}});
+    if(!added){toast('Choose a quantity first ♡');return}
+    saveCart();toast(`${added} item${added>1?'s':''} added to your Peptique bag ♡`);return;
+  }
   const add=e.target.closest('[data-add]'); if(add){cart[add.dataset.add]=(cart[add.dataset.add]||0)+1;saveCart();toast('Added to your Peptique bag ♡');return}
   const qty=e.target.closest('[data-qty]'); if(qty){const id=qty.dataset.qty;cart[id]=(cart[id]||0)+Number(qty.dataset.delta);if(cart[id]<=0)delete cart[id];saveCart();return}
   const rem=e.target.closest('[data-remove]');if(rem){delete cart[rem.dataset.remove];saveCart();return}

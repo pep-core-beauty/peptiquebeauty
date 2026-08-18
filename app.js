@@ -1,6 +1,6 @@
 const ORDER_ENDPOINT = "https://script.google.com/macros/s/AKfycbyB43xPTLQdnArHXLNTQHSuKToNrS5QW1Wq_zYirZMsAKvCo0ucXCcvWzoEgI_v65Wz0g/exec"; // Peptique-only Google Apps Script endpoint.
 
-const products = [
+const fallbackProducts = [
   {id:'T15',code:'T15',name:'Tirzepatide',size:'15 MG',price:1800,category:'Injectables'},
   {id:'T30',code:'T30',name:'Tirzepatide',size:'30 MG',price:2400,category:'Injectables'},
   {id:'T60',code:'T60',name:'Tirzepatide',size:'60 MG',price:3800,category:'Injectables'},
@@ -60,34 +60,63 @@ const products = [
   {id:'OTHER-FREEBIES',code:'OTHER FREEBIES',name:'Other Freebies',size:'—',price:0,category:'Supplies'}
 ];
 
-const shippingRates = {'Metro Manila':100,'Luzon':150,'Visayas':200,'Mindanao':250};
-
-// Live pricing + availability are loaded from the Google Sheet tab named "Stocks".
-// Hard-coded values above are only fallbacks if the live feed is temporarily unavailable.
-const stockKey = (category, code) => `${String(category||'').toLowerCase().replace(/[^a-z0-9]/g,'')}|${String(code||'').toLowerCase().replace(/[^a-z0-9]/g,'')}`;
-products.forEach(p => { p.inStock = true; });
+// Google Sheets "Stocks" is the master product catalog.
+// The embedded catalog above is only a fallback if Google is temporarily unavailable.
+let products = fallbackProducts.map(p => ({...p, inStock:true}));
 let stockFeedReady = false;
+
+const slug = value => String(value || '').trim().toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'') || 'item';
+const esc = value => String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+
+function productFromStockRow(row, index){
+  const category = String(row.category || '').trim() || 'Other';
+  const code = String(row.code || '').trim();
+  const name = String(row.product || '').trim();
+  const size = String(row.variant || '').trim() || 'Standard';
+  const price = Number(row.price);
+  if(!code || !name || !Number.isFinite(price) || price < 0) return null;
+  // Category + code keeps the browser ID unique even if a duplicate code is accidentally entered.
+  return {
+    id:`${slug(category)}--${slug(code)}`,
+    code,
+    name,
+    size,
+    price,
+    category,
+    inStock: row.inStock === true,
+    sheetRow:index + 2
+  };
+}
+
+function syncCategoryFilters(){
+  const filters = document.querySelector('.filters');
+  if(!filters) return;
+  const categories = [...new Set(products.map(p => p.category).filter(Boolean))];
+  if(activeFilter !== 'All' && !categories.includes(activeFilter)) activeFilter = 'All';
+  filters.innerHTML = [
+    `<button class="filter ${activeFilter==='All'?'active':''}" data-filter="All">All</button>`,
+    ...categories.map(c => `<button class="filter ${activeFilter===c?'active':''}" data-filter="${esc(c)}">${esc(c)}</button>`)
+  ].join('');
+}
 
 async function loadLiveStocks(){
   try{
     const url = `${ORDER_ENDPOINT}?action=stocks&_=${Date.now()}`;
     const r = await fetch(url, {cache:'no-store'});
     const data = await r.json();
-    if(!r.ok || data.ok !== true || !Array.isArray(data.stocks)) throw new Error(data.message || 'Stock feed unavailable.');
-    const live = new Map(data.stocks.map(row => [stockKey(row.category,row.code), row]));
-    products.forEach(p => {
-      const row = live.get(stockKey(p.category,p.code));
-      if(!row) return;
-      const livePrice = Number(row.setPrice);
-      if(Number.isFinite(livePrice) && livePrice >= 0) p.price = livePrice;
-      p.inStock = row.inStock === true;
-    });
+    if(!r.ok || data.ok !== true || !Array.isArray(data.stocks)) throw new Error(data.message || 'Catalog feed unavailable.');
+
+    const liveProducts = data.stocks.map(productFromStockRow).filter(Boolean);
+    if(!liveProducts.length) throw new Error('The Stocks tab has no valid product rows.');
+
+    products = liveProducts;
     stockFeedReady = true;
+    syncCategoryFilters();
     renderProducts();
     updateCart();
   }catch(err){
-    console.warn('Peptique live stock feed:', err);
-    // Keep the storefront usable with the last embedded prices if Google is temporarily unreachable.
+    console.warn('Peptique live catalog feed:', err);
+    // Keep the storefront usable with the embedded fallback catalog if Google is temporarily unreachable.
   }
 }
 
@@ -159,14 +188,14 @@ function renderProducts(){
       }).join('');
       return `<div class="variant-row variant-card">
         <div class="variant-card-head">
-          <div class="variant-info"><b>${g.name} ${v.size.toLowerCase()}</b><small>${v.code}</small></div>
+          <div class="variant-info"><b>${esc(g.name)} ${esc(v.size.toLowerCase())}</b><small>${esc(v.code)}</small></div>
         </div>
         <div class="purchase-options">${optionRows}</div>
       </div>`;
     }).join('');
     return `<article class="product-card grouped-card collapsed" data-product-group="${g.key}">
       <div class="product-card-summary" data-toggle-group="${g.key}" role="button" tabindex="0" aria-expanded="false">
-        <div><span class="product-tag">${g.category.toUpperCase()}${g.variants.length===1?' • '+codes:''}</span><h3>${g.name}</h3><p class="product-meta">${g.variants.length>1?'From '+priceText:priceText}</p></div>
+        <div><span class="product-tag">${esc(g.category.toUpperCase())}${g.variants.length===1?' • '+esc(codes):''}</span><h3>${esc(g.name)}</h3><p class="product-meta">${g.variants.length>1?'From '+priceText:priceText}</p></div>
         <span class="product-open-label">VIEW OPTIONS <b>＋</b></span>
       </div>
       <div class="product-options" hidden>
@@ -229,9 +258,9 @@ document.addEventListener('click',e=>{
 
 document.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.matches('[data-toggle-group]')){e.preventDefault();e.target.click();}});
 
-document.querySelectorAll('.filter').forEach(b=>b.addEventListener('click',()=>{activeFilter=b.dataset.filter;document.querySelectorAll('.filter').forEach(x=>x.classList.toggle('active',x===b));renderProducts()}));
+document.querySelector('.filters')?.addEventListener('click',e=>{const b=e.target.closest('.filter');if(!b)return;activeFilter=b.dataset.filter;document.querySelectorAll('.filter').forEach(x=>x.classList.toggle('active',x===b));renderProducts()});
 search.addEventListener('input',renderProducts);
-document.querySelectorAll('[data-category-jump]').forEach(b=>b.addEventListener('click',()=>{activeFilter=b.dataset.categoryJump;document.querySelectorAll('.filter').forEach(x=>x.classList.toggle('active',x.dataset.filter===activeFilter));document.querySelector('#shop').scrollIntoView({behavior:'smooth'});renderProducts()}));
+document.querySelectorAll('[data-category-jump]').forEach(b=>b.addEventListener('click',()=>{const wanted=b.dataset.categoryJump;activeFilter=products.some(p=>p.category===wanted)?wanted:'All';document.querySelectorAll('.filter').forEach(x=>x.classList.toggle('active',x.dataset.filter===activeFilter));document.querySelector('#shop').scrollIntoView({behavior:'smooth'});renderProducts()}));
 
 document.querySelector('.nav-toggle').addEventListener('click',e=>{const nav=document.querySelector('.nav');nav.classList.toggle('open');e.currentTarget.setAttribute('aria-expanded',nav.classList.contains('open'))});
 document.querySelectorAll('.nav a').forEach(a=>a.addEventListener('click',()=>document.querySelector('.nav').classList.remove('open')));
@@ -321,4 +350,4 @@ form.addEventListener('submit',async e=>{
 document.querySelector('#copy-order').addEventListener('click',async()=>{try{await navigator.clipboard.writeText(lastOrderSummary);toast('Order summary copied ♡')}catch{toast('Copy unavailable — screenshot your order number instead')}});
 document.querySelector('#continue-shopping').addEventListener('click',()=>{document.querySelector('#success-modal').hidden=true;cart={};saveCart();form.reset();panel.hidden=true;document.querySelector('#file-name').textContent='Choose image or PDF';document.querySelector('#shop').scrollIntoView({behavior:'smooth'})});
 
-renderProducts();updateCart();loadLiveStocks();
+syncCategoryFilters();renderProducts();updateCart();loadLiveStocks();

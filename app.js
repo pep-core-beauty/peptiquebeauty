@@ -71,6 +71,24 @@ const grid = document.querySelector('#product-grid');
 const search = document.querySelector('#product-search');
 
 const shopQty = {};
+function hasVialBacOption(p){
+  return p.category==='Injectables' && /\bMG\b/i.test(p.size);
+}
+function purchaseOptions(p){
+  if(hasVialBacOption(p)) return [
+    {key:`${p.id}::SET`,label:'Complete Set',price:p.price},
+    {key:`${p.id}::VBW`,label:'Vial + BAC Water only',price:Math.max(0,p.price-200)}
+  ];
+  return [{key:p.id,label:'Standard',price:p.price}];
+}
+function resolveCartItem(key){
+  const [id,mode]=String(key).split('::');
+  const base=products.find(p=>p.id===id);
+  if(!base) return null;
+  if(mode==='VBW') return {...base,cartKey:key,packageName:'Vial + BAC Water only',price:Math.max(0,base.price-200)};
+  if(mode==='SET') return {...base,cartKey:key,packageName:'Complete Set',price:base.price};
+  return {...base,cartKey:key,packageName:'',price:base.price};
+}
 function productGroups(list){
   const groups=[];
   const map=new Map();
@@ -94,28 +112,45 @@ function renderProducts(){
     const priceMin=Math.min(...g.variants.map(v=>v.price));
     const priceMax=Math.max(...g.variants.map(v=>v.price));
     const priceText=priceMin===priceMax?peso(priceMin):`${peso(priceMin)} – ${peso(priceMax)}`;
-    const rows=g.variants.map(v=>`<div class="variant-row"><div class="variant-info"><b>${variantLabel(v,g)}</b><span>${peso(v.price)}</span></div><div class="shop-stepper"><button type="button" data-shop-qty="${v.id}" data-delta="-1" aria-label="Decrease ${v.name} ${v.size}">−</button><span data-shop-count="${v.id}">${shopQty[v.id]||0}</span><button type="button" data-shop-qty="${v.id}" data-delta="1" aria-label="Increase ${v.name} ${v.size}">+</button></div></div>`).join('');
+    const rows=g.variants.map(v=>{
+      const options=purchaseOptions(v);
+      const optionRows=options.map(opt=>{
+        const qty=shopQty[opt.key] ?? 1; shopQty[opt.key]=qty;
+        const standard=options.length===1;
+        return `<div class="purchase-option ${standard?'single-option':''}">
+          <div class="purchase-option-top"><span>${standard?'':opt.label}</span><strong>${peso(opt.price)}</strong></div>
+          <div class="variant-card-actions">
+            <div class="shop-stepper"><button type="button" data-shop-qty="${opt.key}" data-delta="-1" aria-label="Decrease ${v.name} ${v.size}">−</button><span data-shop-count="${opt.key}">${qty}</span><button type="button" data-shop-qty="${opt.key}" data-delta="1" aria-label="Increase ${v.name} ${v.size}">+</button></div>
+            <button class="variant-add" type="button" data-add-variant="${opt.key}">${standard?'ADD TO CART':opt.label==='Complete Set'?'ADD SET TO CART':'ADD VIAL + BAC WATER'}</button>
+          </div>
+        </div>`;
+      }).join('');
+      return `<div class="variant-row variant-card">
+        <div class="variant-card-head">
+          <div class="variant-info"><b>${g.name} ${v.size.toLowerCase()}</b><small>${v.code}</small></div>
+        </div>
+        <div class="purchase-options">${optionRows}</div>
+      </div>`;
+    }).join('');
     return `<article class="product-card grouped-card collapsed" data-product-group="${g.key}">
       <div class="product-card-summary" data-toggle-group="${g.key}" role="button" tabindex="0" aria-expanded="false">
         <div><span class="product-tag">${g.category.toUpperCase()}${g.variants.length===1?' • '+codes:''}</span><h3>${g.name}</h3><p class="product-meta">${g.variants.length>1?'From '+priceText:priceText}</p></div>
         <span class="product-open-label">VIEW OPTIONS <b>＋</b></span>
       </div>
       <div class="product-options" hidden>
-        <p class="options-note">${g.variants.length>1?'Choose strength & quantity':'Select quantity'}</p>
         <div class="variant-list">${rows}</div>
-        <button class="add-button group-add" type="button" data-add-group="${g.key}">ADD SELECTED TO BAG</button>
       </div>
     </article>`;
   }).join('');
   document.querySelector('#no-results').hidden=!!groups.length;
 }
 function saveCart(){localStorage.setItem('peptiqueCart',JSON.stringify(cart));updateCart();}
-function cartEntries(){return Object.entries(cart).map(([id,qty])=>({product:products.find(p=>p.id===id),qty})).filter(x=>x.product&&x.qty>0)}
+function cartEntries(){return Object.entries(cart).map(([key,qty])=>({product:resolveCartItem(key),qty,key})).filter(x=>x.product&&x.qty>0)}
 function subtotal(){return cartEntries().reduce((s,x)=>s+x.product.price*x.qty,0)}
 function updateCart(){
   const entries=cartEntries(); const count=entries.reduce((s,x)=>s+x.qty,0); document.querySelectorAll('.cart-count').forEach(x=>x.textContent=count);
   const container=document.querySelector('#cart-items');
-  container.innerHTML=entries.length?entries.map(({product:p,qty})=>`<div class="cart-row"><div><h4>${p.name}</h4><small>${p.size} · ${peso(p.price)}</small><div class="qty-control"><button data-qty="${p.id}" data-delta="-1">−</button><span>${qty}</span><button data-qty="${p.id}" data-delta="1">+</button><button class="remove" data-remove="${p.id}">remove</button></div></div><b>${peso(p.price*qty)}</b></div>`).join(''):'<p class="empty-cart">Your bag is waiting for something pretty ♡</p>';
+  container.innerHTML=entries.length?entries.map(({product:p,qty,key})=>`<div class="cart-row"><div><h4>${p.name}</h4><small>${p.size}${p.packageName?' · '+p.packageName:''} · ${peso(p.price)}</small><div class="qty-control"><button data-qty="${key}" data-delta="-1">−</button><span>${qty}</span><button data-qty="${key}" data-delta="1">+</button><button class="remove" data-remove="${key}">remove</button></div></div><b>${peso(p.price*qty)}</b></div>`).join(''):'<p class="empty-cart">Your bag is waiting for something pretty ♡</p>';
   document.querySelector('#cart-subtotal').textContent=peso(subtotal()); document.querySelector('#cart-total').textContent=peso(subtotal());
 }
 function toast(msg){let t=document.querySelector('.toast');if(!t){t=document.createElement('div');t.className='toast';document.body.appendChild(t)}t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),1600)}
@@ -139,17 +174,18 @@ document.addEventListener('click',e=>{
   const shopStep=e.target.closest('[data-shop-qty]');
   if(shopStep){
     const id=shopStep.dataset.shopQty;
-    shopQty[id]=Math.max(0,(shopQty[id]||0)+Number(shopStep.dataset.delta));
+    shopQty[id]=Math.max(1,(shopQty[id]??1)+Number(shopStep.dataset.delta));
     const count=document.querySelector(`[data-shop-count="${id}"]`);if(count)count.textContent=shopQty[id];
     return;
   }
-  const groupAdd=e.target.closest('[data-add-group]');
-  if(groupAdd){
-    const group=productGroups(products).find(g=>g.key===groupAdd.dataset.addGroup);
-    let added=0;
-    (group?.variants||[]).forEach(v=>{const n=shopQty[v.id]||0;if(n>0){cart[v.id]=(cart[v.id]||0)+n;added+=n;shopQty[v.id]=0;const c=document.querySelector(`[data-shop-count="${v.id}"]`);if(c)c.textContent='0'}});
-    if(!added){toast('Choose a quantity first ♡');return}
-    saveCart();toast(`${added} item${added>1?'s':''} added to your Peptique bag ♡`);return;
+  const variantAdd=e.target.closest('[data-add-variant]');
+  if(variantAdd){
+    const key=variantAdd.dataset.addVariant;
+    const n=Math.max(1,shopQty[key]??1);
+    cart[key]=(cart[key]||0)+n;
+    shopQty[key]=1;
+    const c=document.querySelector(`[data-shop-count="${key}"]`);if(c)c.textContent='1';
+    saveCart();toast(`${n} item${n>1?'s':''} added to your Peptique bag ♡`);return;
   }
   const add=e.target.closest('[data-add]'); if(add){cart[add.dataset.add]=(cart[add.dataset.add]||0)+1;saveCart();toast('Added to your Peptique bag ♡');return}
   const qty=e.target.closest('[data-qty]'); if(qty){const id=qty.dataset.qty;cart[id]=(cart[id]||0)+Number(qty.dataset.delta);if(cart[id]<=0)delete cart[id];saveCart();return}
@@ -222,8 +258,8 @@ form.addEventListener('submit',async e=>{
     if(String(fd.get('deliveryMethod')||'').startsWith('J&T') && totals.ship<=0){throw new Error('Please select your J&T destination so the shipping fee can be added.')} 
     const orderNo=makeOrderNumber();
     const entries=cartEntries();
-    const itemLines=entries.map(({product:p,qty})=>`${qty}× ${p.name} ${p.size} — ${peso(p.price*qty)}`).join('\n');
-    const itemData=entries.map(({product:p,qty})=>({id:p.id,code:p.code,name:p.name,size:p.size,price:p.price,qty,lineTotal:p.price*qty}));
+    const itemLines=entries.map(({product:p,qty})=>`${qty}× ${p.name} ${p.size}${p.packageName?' · '+p.packageName:''} — ${peso(p.price*qty)}`).join('\n');
+    const itemData=entries.map(({product:p,qty,key})=>({id:p.id,cartKey:key,code:p.code,name:p.name,size:p.size,package:p.packageName||'',price:p.price,qty,lineTotal:p.price*qty}));
     lastOrderSummary=`PEPTIQUE BEAUTY PH\nOrder: ${orderNo}\n\n${itemLines}\n\nSubtotal: ${peso(totals.sub)}\nShipping: ${totals.shipText}\nTotal: ${peso(totals.total)}\n\nCustomer: ${fd.get('fullName')}\nContact: ${fd.get('contact')}\nEmail: ${fd.get('email')||'—'}\nAddress: ${fd.get('address')}, ${fd.get('barangay')}, ${fd.get('city')}, ${fd.get('province')}\nLandmark: ${fd.get('landmark')||'—'}\nDelivery: ${fd.get('deliveryMethod')}${fd.get('region')?' — '+fd.get('region'):''}\nPayment: ${fd.get('paymentMethod')}\nNotes: ${fd.get('notes')||'—'}`;
 
     const receipt=await fileToPayload(receiptFile);

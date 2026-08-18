@@ -12,3 +12,43 @@
 /* Pep Core-style collapsed product options */
 .grouped-card{min-height:0;padding:0;overflow:hidden}.product-card-summary{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:22px;cursor:pointer;min-height:150px}.product-card-summary>div{min-width:0}.product-card-summary h3{margin:7px 0 6px}.product-open-label{flex:0 0 auto;font-size:9px;font-weight:800;letter-spacing:.12em;color:var(--wine);display:flex;align-items:center;gap:8px}.product-open-label b{display:grid;place-items:center;width:28px;height:28px;border:1px solid var(--line);border-radius:50%;font-size:16px;font-weight:400}.product-options{padding:0 22px 22px;border-top:1px solid #f0dcdf;background:rgba(255,255,255,.38)}.product-options[hidden]{display:none}.options-note{font-size:10px;color:var(--muted);margin:15px 0 3px}.grouped-card.open{box-shadow:0 18px 45px rgba(84,12,29,.10)}.grouped-card.open .product-card-summary{min-height:auto}.grouped-card.collapsed .variant-list,.grouped-card.collapsed .group-add{display:none}
 @media(max-width:720px){.product-card-summary{padding:18px;min-height:125px}.product-options{padding:0 18px 18px}.product-open-label{font-size:8px}.product-open-label b{width:30px;height:30px}}
+
+
+/* Peptique variant cards — Pep Core-style expanded product options */
+.variant-list{display:flex;flex-direction:column;gap:12px;margin-top:16px}
+.variant-row.variant-card{display:block;padding:16px;border:1px solid #efc7d0;border-radius:18px;background:#fff;margin:0}
+.variant-card-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:10px}
+.variant-card .variant-info{display:flex;flex-direction:column;gap:1px;min-width:0}
+.variant-card .variant-info b{font-family:var(--sans);font-size:15px;line-height:1.25;color:#5e1830;font-weight:750;text-transform:none}
+.variant-card .variant-info small{font-size:10px;color:#aa7582;letter-spacing:.02em}
+.variant-price{font-size:16px;color:#a30f62;white-space:nowrap;font-weight:800}
+.variant-card-actions{display:grid;grid-template-columns:auto minmax(150px,1fr);gap:10px;align-items:center}
+.variant-card .shop-stepper{display:grid;grid-template-columns:36px 28px 36px;align-items:center;border:1px solid #efc7d0;border-radius:999px;padding:3px;background:#fff8fa;gap:0}
+.variant-card .shop-stepper button{width:36px;height:36px;border:0;background:transparent;color:#b41468;font-size:20px;font-weight:700}
+.variant-card .shop-stepper span{min-width:28px;text-align:center;font-size:13px;font-weight:800;color:#60152e}
+.variant-add{width:100%;min-height:42px;border:0;border-radius:999px;background:linear-gradient(90deg,#df1882,#bf0d70);color:#fff;font-size:11px;font-weight:800;letter-spacing:.01em;cursor:pointer;padding:11px 18px}
+.variant-add:hover{filter:brightness(.95)}
+.grouped-card.collapsed .variant-list{display:none}
+@media(max-width:720px){
+  .variant-row.variant-card{padding:14px 12px;border-radius:16px}
+  .variant-card-actions{grid-template-columns:112px 1fr;gap:8px}
+  .variant-card .shop-stepper{grid-template-columns:34px 25px 34px}
+  .variant-card .shop-stepper button{width:34px;height:34px}
+  .variant-add{min-height:40px;padding:10px 12px;font-size:10px}
+}
+
+
+/* Complete Set / Vial + BAC Water purchase options */
+.purchase-options{display:flex;flex-direction:column;gap:9px}
+.purchase-option{border-top:1px solid #f4dbe2;padding-top:10px}
+.purchase-option:first-child{border-top:0;padding-top:0}
+.purchase-option-top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:7px;font-size:11px;color:#7d5360}
+.purchase-option-top span{font-weight:750;color:#68182f}
+.purchase-option-top strong{font-family:var(--serif);font-size:17px;color:#b10b5d}
+.purchase-option.single-option .purchase-option-top span:empty{display:none}
+.variant-card-head{margin-bottom:9px}
+@media(max-width:560px){
+  .purchase-option-top{font-size:10px}
+  .purchase-option-top strong{font-size:16px}
+  .variant-add{font-size:9px;padding-left:8px;padding-right:8px}
+}

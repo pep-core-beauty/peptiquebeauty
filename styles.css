@@ -64,3 +64,11 @@
 /* Keep expanded options compact and contained */
 .grouped-card.open{align-self:start}.variant-card-actions{min-width:0}.variant-add{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.variant-card{min-width:0}.variant-info b{overflow-wrap:anywhere}
 @media(max-width:720px){.variant-card-actions{grid-template-columns:112px minmax(0,1fr)}.variant-add{font-size:9px;padding-inline:8px}}
+
+/* Peptique checkout discount code */
+.discount-code-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;margin-top:6px}
+.discount-code-row input{text-transform:uppercase;min-width:0}
+.discount-code-row button{border:1px solid var(--wine,#72152a);background:var(--wine,#72152a);color:#fff;border-radius:12px;padding:0 18px;font-weight:800;letter-spacing:.06em;cursor:pointer;min-height:44px}
+.discount-code-row button:disabled{opacity:.6;cursor:wait}
+#discount-code-status{display:block;margin-top:6px}
+@media(max-width:520px){.discount-code-row{grid-template-columns:1fr}.discount-code-row button{width:100%}}

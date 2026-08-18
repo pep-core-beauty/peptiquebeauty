@@ -262,7 +262,58 @@ if(!packaging){
   packaging=label.querySelector('select');
 }
 function eligibleVialQty(){return cartEntries().reduce((sum,{product:p,qty})=>sum+(isVialDiscountEligible(p)?qty:0),0)}
-function packagingDiscount(){return packaging&&packaging.value==='Vial + BAC Water only'?Math.min(subtotal(),eligibleVialQty()*200):0}
+
+// Vial-only packaging is ₱200 off per eligible vial by default.
+// A valid active code from the Google Sheet Discounts tab can override the per-vial amount.
+let appliedDiscountCode='';
+let appliedDiscountPerVial=200;
+let discountCodeInput=document.querySelector('#discount-code');
+let discountApplyButton=document.querySelector('#apply-discount-code');
+let discountCodeStatus=document.querySelector('#discount-code-status');
+if(!discountCodeInput){
+  const packagingLabel=packaging?.closest('label');
+  const codeLabel=document.createElement('label');
+  codeLabel.className='span-2 discount-code-field';
+  codeLabel.innerHTML=`DISCOUNT CODE <div class="discount-code-row"><input id="discount-code" name="discountCode" type="text" inputmode="text" autocomplete="off" placeholder="e.g. PB400" maxlength="24"><button id="apply-discount-code" type="button">APPLY</button></div><small id="discount-code-status" class="field-help">Optional. Active PB codes change the vial-only discount per eligible vial.</small>`;
+  packagingLabel?.insertAdjacentElement('afterend',codeLabel);
+  discountCodeInput=codeLabel.querySelector('#discount-code');
+  discountApplyButton=codeLabel.querySelector('#apply-discount-code');
+  discountCodeStatus=codeLabel.querySelector('#discount-code-status');
+}
+function currentDiscountPerVial(){return appliedDiscountCode?appliedDiscountPerVial:200}
+function packagingDiscount(){return packaging&&packaging.value==='Vial + BAC Water only'?Math.min(subtotal(),eligibleVialQty()*currentDiscountPerVial()):0}
+async function applyDiscountCode(){
+  const code=String(discountCodeInput?.value||'').trim().toUpperCase();
+  if(discountCodeInput)discountCodeInput.value=code;
+  if(!code){
+    appliedDiscountCode='';appliedDiscountPerVial=200;
+    if(discountCodeStatus)discountCodeStatus.textContent='No code applied — vial-only packaging uses the standard ₱200 discount per eligible vial.';
+    recalcCheckout();return;
+  }
+  if(packaging?.value!=='Vial + BAC Water only'){
+    if(discountCodeStatus)discountCodeStatus.textContent='Choose Vial + BAC Water only first to use a packaging discount code.';
+    return;
+  }
+  const old=discountApplyButton?.textContent;
+  if(discountApplyButton){discountApplyButton.disabled=true;discountApplyButton.textContent='CHECKING…';}
+  try{
+    const r=await fetch(`${ORDER_ENDPOINT}?action=discount&code=${encodeURIComponent(code)}&_=${Date.now()}`,{cache:'no-store'});
+    const data=await r.json();
+    if(!r.ok||data.ok!==true||data.valid!==true||!(Number(data.discount)>0))throw new Error('Invalid or inactive discount code.');
+    appliedDiscountCode=code;appliedDiscountPerVial=Number(data.discount);
+    if(discountCodeStatus)discountCodeStatus.textContent=`${code} applied — ${peso(appliedDiscountPerVial)} off each eligible vial.`;
+    recalcCheckout();
+  }catch(err){
+    appliedDiscountCode='';appliedDiscountPerVial=200;
+    if(discountCodeStatus)discountCodeStatus.textContent='Code not active. Standard ₱200 vial-only discount will apply.';
+    recalcCheckout();
+  }finally{
+    if(discountApplyButton){discountApplyButton.disabled=false;discountApplyButton.textContent=old||'APPLY';}
+  }
+}
+discountApplyButton?.addEventListener('click',applyDiscountCode);
+discountCodeInput?.addEventListener('input',()=>{appliedDiscountCode='';appliedDiscountPerVial=200;if(discountCodeStatus)discountCodeStatus.textContent='Press APPLY to verify this code.';recalcCheckout();});
+discountCodeInput?.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();applyDiscountCode();}});
 
 let discountRow=document.querySelector('#checkout-discount-row');
 if(!discountRow){
@@ -296,7 +347,7 @@ delivery.addEventListener('change',handleDeliveryChange);
 delivery.addEventListener('input',handleDeliveryChange);
 region.addEventListener('change',recalcCheckout);
 region.addEventListener('input',recalcCheckout);
-packaging?.addEventListener('change',recalcCheckout);
+packaging?.addEventListener('change',()=>{if(packaging.value!=='Vial + BAC Water only'){appliedDiscountCode='';appliedDiscountPerVial=200;if(discountCodeStatus)discountCodeStatus.textContent='Discount codes apply to Vial + BAC Water only.';}recalcCheckout();});
 
 const payment=document.querySelector('#payment-method'),panel=document.querySelector('#payment-panel'),qr=document.querySelector('#payment-qr'),paymentName=document.querySelector('#payment-name');
 payment.addEventListener('change',()=>{if(payment.value&&paymentQR[payment.value]){qr.src=paymentQR[payment.value];paymentName.textContent=payment.value;panel.hidden=false}else panel.hidden=true});
@@ -338,7 +389,7 @@ form.addEventListener('submit',async e=>{
     const packagingChoice=String(fd.get('packagingMethod')||'Complete Set');
     const itemLines=entries.map(({product:p,qty})=>`${qty}× ${p.name} ${p.size}${packagingChoice==='Vial + BAC Water only'&&isVialDiscountEligible(p)?' · Vial + BAC Water only':''} — ${peso(p.price*qty)}`).join('\n');
     const itemData=entries.map(({product:p,qty,key})=>({id:p.id,cartKey:key,code:p.code,name:p.name,size:p.size,package:packagingChoice==='Vial + BAC Water only'&&isVialDiscountEligible(p)?'Vial + BAC Water only':'Complete Set',price:p.price,qty,lineTotal:p.price*qty}));
-    lastOrderSummary=`PEPTIQUE BEAUTY PH\nOrder: ${orderNo}\n\n${itemLines}\n\nItems subtotal: ${peso(totals.sub)}\nPackaging: ${packagingChoice}\nPackaging discount: ${totals.discount?'-'+peso(totals.discount):'—'}\nShipping: ${totals.shipText}\nTotal: ${peso(totals.total)}\n\nCustomer: ${fd.get('fullName')}\nContact: ${fd.get('contact')}\nEmail: ${fd.get('email')||'—'}\nAddress: ${fd.get('address')}, ${fd.get('barangay')}, ${fd.get('city')}, ${fd.get('province')}\nLandmark: ${fd.get('landmark')||'—'}\nDelivery: ${fd.get('deliveryMethod')}${fd.get('region')?' — '+fd.get('region'):''}\nPayment: ${fd.get('paymentMethod')}\nNotes: ${fd.get('notes')||'—'}`;
+    lastOrderSummary=`PEPTIQUE BEAUTY PH\nOrder: ${orderNo}\n\n${itemLines}\n\nItems subtotal: ${peso(totals.sub)}\nPackaging: ${packagingChoice}\nPackaging discount: ${totals.discount?'-'+peso(totals.discount):'—'}${appliedDiscountCode?`\nDiscount code: ${appliedDiscountCode} (${peso(appliedDiscountPerVial)}/vial)`:''}\nShipping: ${totals.shipText}\nTotal: ${peso(totals.total)}\n\nCustomer: ${fd.get('fullName')}\nContact: ${fd.get('contact')}\nEmail: ${fd.get('email')||'—'}\nAddress: ${fd.get('address')}, ${fd.get('barangay')}, ${fd.get('city')}, ${fd.get('province')}\nLandmark: ${fd.get('landmark')||'—'}\nDelivery: ${fd.get('deliveryMethod')}${fd.get('region')?' — '+fd.get('region'):''}\nPayment: ${fd.get('paymentMethod')}\nNotes: ${fd.get('notes')||'—'}`;
 
     const receipt=await fileToPayload(receiptFile);
     const payload={
@@ -346,7 +397,13 @@ form.addEventListener('submit',async e=>{
       customer:{fullName:fd.get('fullName'),contact:fd.get('contact'),email:fd.get('email')||'',address:fd.get('address'),barangay:fd.get('barangay'),city:fd.get('city'),province:fd.get('province'),landmark:fd.get('landmark')||''},
       delivery:{method:fd.get('deliveryMethod'),region:fd.get('region')||'',shippingFee:totals.ship,shippingText:totals.shipText},
       payment:{method:fd.get('paymentMethod'),status:receiptFile?'Paid - To verify':'Payment selected - receipt not uploaded'},
-      items:itemData,itemsText:itemLines,subtotal:totals.netSubtotal,total:totals.total,notes:[`Packaging: ${packagingChoice}`,totals.discount?`Packaging discount: -${peso(totals.discount)}`:'',fd.get('notes')||''].filter(Boolean).join(' | '),orderSummary:lastOrderSummary,receipt
+      packagingMethod:packagingChoice,
+      discountCode:appliedDiscountCode,
+      discountPerVial:currentDiscountPerVial(),
+      eligibleVialQty:eligibleVialQty(),
+      grossSubtotal:totals.sub,
+      packagingDiscount:totals.discount,
+      items:itemData,itemsText:itemLines,subtotal:totals.netSubtotal,total:totals.total,notes:[`Packaging: ${packagingChoice}`,appliedDiscountCode?`Discount code: ${appliedDiscountCode} (${peso(appliedDiscountPerVial)}/vial)`:'',totals.discount?`Packaging discount: -${peso(totals.discount)}`:'',fd.get('notes')||''].filter(Boolean).join(' | '),orderSummary:lastOrderSummary,receipt
     };
 
     const r=await fetch(ORDER_ENDPOINT,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload)});
@@ -360,6 +417,6 @@ form.addEventListener('submit',async e=>{
   }finally{submitButton.disabled=false;submitButton.textContent=originalText;}
 });
 document.querySelector('#copy-order').addEventListener('click',async()=>{try{await navigator.clipboard.writeText(lastOrderSummary);toast('Order summary copied ♡')}catch{toast('Copy unavailable — screenshot your order number instead')}});
-document.querySelector('#continue-shopping').addEventListener('click',()=>{document.querySelector('#success-modal').hidden=true;cart={};saveCart();form.reset();if(packaging)packaging.value='Complete Set';panel.hidden=true;document.querySelector('#file-name').textContent='Choose image or PDF';document.querySelector('#shop').scrollIntoView({behavior:'smooth'})});
+document.querySelector('#continue-shopping').addEventListener('click',()=>{document.querySelector('#success-modal').hidden=true;cart={};saveCart();form.reset();if(packaging)packaging.value='Complete Set';appliedDiscountCode='';appliedDiscountPerVial=200;if(discountCodeInput)discountCodeInput.value='';if(discountCodeStatus)discountCodeStatus.textContent='Optional. Active PB codes change the vial-only discount per eligible vial.';panel.hidden=true;document.querySelector('#file-name').textContent='Choose image or PDF';document.querySelector('#shop').scrollIntoView({behavior:'smooth'})});
 
 syncCategoryFilters();renderProducts();updateCart();loadLiveStocks();

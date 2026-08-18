@@ -88,6 +88,7 @@ function productFromStockRow(row, index){
     size,
     price,
     category,
+    imageUrl: String(row.imageUrl || '').trim(),
     inStock: row.inStock === true,
     sheetRow:index + 2
   };
@@ -198,8 +199,10 @@ function renderProducts(){
         </div>
       </div>`;
     }).join('');
+    const groupImage = g.variants.find(v => v.imageUrl)?.imageUrl || '';
     return `<article class="product-card grouped-card collapsed" data-product-group="${g.key}">
       <div class="product-card-summary" data-toggle-group="${g.key}" role="button" tabindex="0" aria-expanded="false">
+      ${groupImage ? `<img class="product-image" src="${esc(groupImage)}" alt="${esc(g.name)}">` : ''}
         <div><span class="product-tag">${esc(g.category.toUpperCase())}${g.variants.length===1?' • '+esc(codes):''}</span><h3>${esc(g.name)}</h3><p class="product-meta">${g.variants.length>1?'From '+priceText:priceText}</p></div>
         <span class="product-open-label">VIEW OPTIONS <b>＋</b></span>
       </div>

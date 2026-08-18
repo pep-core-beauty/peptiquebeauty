@@ -58,3 +58,38 @@
 .purchase-option.sold-out .purchase-option-top strong{text-decoration:line-through}
 .variant-add:disabled{cursor:not-allowed;background:#cbb9bd;color:#fff;filter:none}
 .shop-stepper button:disabled{cursor:not-allowed;opacity:.42}
+
+/* 2026-08-18: compact full-width expanded variant layout */
+.grouped-card.open .product-options{padding:18px 22px 22px}
+.grouped-card.open .variant-list{gap:12px;margin-top:0}
+.grouped-card.open .variant-row.variant-card{width:100%;padding:15px 16px;border-radius:17px;overflow:hidden}
+.grouped-card.open .variant-card-head{margin-bottom:9px;align-items:flex-start}
+.grouped-card.open .variant-card .variant-info b{font-size:14px;line-height:1.18}
+.grouped-card.open .variant-price{font-size:16px}
+.grouped-card.open .purchase-options{gap:8px}
+.grouped-card.open .purchase-option{min-width:0}
+.grouped-card.open .variant-card-actions{display:grid;grid-template-columns:114px minmax(0,1fr);gap:10px;width:100%;align-items:center}
+.grouped-card.open .variant-card .shop-stepper{width:114px;grid-template-columns:36px 34px 36px;justify-content:center;min-width:0}
+.grouped-card.open .variant-add{width:100%;min-width:0;max-width:100%;white-space:nowrap}
+
+@media(max-width:720px){
+  .grouped-card.open .product-options{padding:14px 12px 14px}
+  .grouped-card.open .variant-list{gap:10px}
+  .grouped-card.open .variant-row.variant-card{padding:13px 12px;border-radius:16px}
+  .grouped-card.open .variant-card-head{gap:10px;margin-bottom:8px}
+  .grouped-card.open .variant-card .variant-info b{font-size:13px;line-height:1.18;overflow-wrap:anywhere}
+  .grouped-card.open .variant-card .variant-info small{font-size:9px}
+  .grouped-card.open .variant-price{font-size:15px;flex:0 0 auto}
+  .grouped-card.open .purchase-option-top{gap:8px}
+  .grouped-card.open .variant-card-actions{grid-template-columns:108px minmax(0,1fr);gap:8px}
+  .grouped-card.open .variant-card .shop-stepper{width:108px;grid-template-columns:34px 30px 34px;padding:2px}
+  .grouped-card.open .variant-card .shop-stepper button{width:34px;height:34px}
+  .grouped-card.open .variant-add{min-height:40px;padding:10px 8px;font-size:10px}
+}
+
+@media(max-width:390px){
+  .grouped-card.open .variant-card-actions{grid-template-columns:102px minmax(0,1fr);gap:7px}
+  .grouped-card.open .variant-card .shop-stepper{width:102px;grid-template-columns:32px 30px 32px}
+  .grouped-card.open .variant-card .shop-stepper button{width:32px;height:32px}
+  .grouped-card.open .variant-add{font-size:9px;padding-left:6px;padding-right:6px}
+}

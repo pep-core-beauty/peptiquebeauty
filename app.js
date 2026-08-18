@@ -176,7 +176,11 @@ function renderProducts(){
   }
 
   topicalNotice.hidden = activeFilter !== 'Topicals';
-  const visible=products.filter(p => (activeFilter==='All'||p.category===activeFilter) && `${p.name} ${p.code} ${p.size}`.toLowerCase().includes(q));
+  const visible=products.filter(p =>
+  p.inStock === true &&
+  (activeFilter === 'All' || p.category === activeFilter) &&
+  `${p.name} ${p.code} ${p.size}`.toLowerCase().includes(q)
+);
   const groups=productGroups(visible);
   grid.innerHTML=groups.map(g=>{
     const codes=g.variants.map(v=>v.code).join(' / ');

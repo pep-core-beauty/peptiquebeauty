@@ -1,5 +1,10 @@
 const ORDER_ENDPOINT = "https://script.google.com/macros/s/AKfycbyB43xPTLQdnArHXLNTQHSuKToNrS5QW1Wq_zYirZMsAKvCo0ucXCcvWzoEgI_v65Wz0g/exec"; // Peptique-only Google Apps Script endpoint.
-
+const shippingRates = {
+  'Metro Manila': 100,
+  'Luzon': 150,
+  'Visayas': 200,
+  'Mindanao': 250
+};
 const fallbackProducts = [
   {id:'T15',code:'T15',name:'Tirzepatide',size:'15 MG',price:1800,category:'Injectables'},
   {id:'T30',code:'T30',name:'Tirzepatide',size:'30 MG',price:2400,category:'Injectables'},

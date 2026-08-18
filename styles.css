@@ -182,4 +182,15 @@
     gap: 5px;
   }
 }
-
+/* PRODUCT IMAGES */
+.product-image {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  object-fit: contain;
+  object-position: center;
+  display: block;
+  margin: 0 0 18px;
+  padding: 12px;
+  border-radius: 18px;
+  background: #fffaf8;
+}

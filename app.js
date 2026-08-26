@@ -176,6 +176,27 @@ function renderProducts(){
   }
 
   topicalNotice.hidden = activeFilter !== 'Topicals';
+
+  let injectableNotice = document.querySelector('#injectable-set-notice');
+
+if (!injectableNotice) {
+  injectableNotice = document.createElement('div');
+  injectableNotice.id = 'injectable-set-notice';
+  injectableNotice.className = 'injectable-set-notice';
+
+  injectableNotice.innerHTML = `
+    <strong>🎀 SET PRICE INCLUDED</strong>
+    <span>
+      All listed injectable prices are for the <b>Complete Set</b> —
+      vial, BAC water, syringes & alcohol pads included.
+      <b>Vial + BAC Water only</b> is available at checkout with the applicable discount.
+    </span>
+  `;
+
+  grid.insertAdjacentElement('beforebegin', injectableNotice);
+}
+
+injectableNotice.hidden = activeFilter !== 'Injectables';
   const visible=products.filter(p =>
   p.inStock === true &&
   (activeFilter === 'All' || p.category === activeFilter) &&

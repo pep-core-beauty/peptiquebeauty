@@ -231,3 +231,26 @@
   border: none;
   border-radius: 0;
 }
+
+/* INJECTABLE COMPLETE SET NOTICE */
+.injectable-set-notice {
+  margin: 18px 0 24px;
+  padding: 16px 20px;
+  border: 1px solid #edc8cc;
+  border-radius: 16px;
+  background: #fff8f7;
+  color: #7b0f22;
+  line-height: 1.55;
+}
+
+.injectable-set-notice strong {
+  display: block;
+  margin-bottom: 5px;
+  font-size: 12px;
+  letter-spacing: 0.12em;
+}
+
+.injectable-set-notice span {
+  display: block;
+  font-size: 13px;
+}

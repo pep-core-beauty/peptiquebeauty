@@ -203,7 +203,7 @@ function renderProducts(){
         </div>
       </div>`;
     }).join('');
-    const groupImage =   g.variants.find(v => v.imageUrl)?.imageUrl ||   'product-placeholder.png';
+    const groupImage =   g.variants.find(v => v.imageUrl)?.imageUrl ||   'https://peptiquebeauty.com/product-placeholder.png';
     return `<article class="product-card grouped-card collapsed" data-product-group="${g.key}">
       <div class="product-card-summary" data-toggle-group="${g.key}" role="button" tabindex="0" aria-expanded="false">
       ${groupImage ? `<img class="product-image" src="${esc(groupImage)}" alt="${esc(g.name)}">` : ''}

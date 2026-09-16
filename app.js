@@ -211,7 +211,6 @@ if (!injectableNotice) {
 
 injectableNotice.hidden = activeFilter !== 'Injectables';
   const visible=products.filter(p =>
-  p.inStock === true &&
   (activeFilter === 'All' || p.category === activeFilter) &&
   `${p.name} ${p.code} ${p.size}`.toLowerCase().includes(q)
 );

@@ -67,7 +67,7 @@ const fallbackProducts = [
 
 // Google Sheets "Stocks" is the master product catalog.
 // The embedded catalog above is only a fallback if Google is temporarily unavailable.
-let products = [];
+let products = fallbackProducts.map(p => ({...p, inStock:true}));
 let stockFeedReady = false;
 
 const slug = value => String(value || '').trim().toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'') || 'item';

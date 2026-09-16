@@ -67,7 +67,7 @@ const fallbackProducts = [
 
 // Google Sheets "Stocks" is the master product catalog.
 // The embedded catalog above is only a fallback if Google is temporarily unavailable.
-let products = fallbackProducts.map(p => ({...p, inStock:true}));
+let products = [];
 let stockFeedReady = false;
 
 const slug = value => String(value || '').trim().toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'') || 'item';
@@ -121,8 +121,18 @@ async function loadLiveStocks(){
     renderProducts();
     updateCart();
   }catch(err){
-    console.warn('Peptique live catalog feed:', err);
-    // Keep the storefront usable with the embedded fallback catalog if Google is temporarily unreachable.
+  console.warn('Peptique live catalog feed:', err);
+  stockFeedReady = false;
+  products = [];
+  syncCategoryFilters();
+  renderProducts();
+
+  const noResults = document.querySelector('#no-results');
+  if(noResults){
+    noResults.hidden = false;
+    noResults.textContent = 'Unable to load current products. Please refresh the page and try again. ♡';
+  }
+}
   }
 }
 

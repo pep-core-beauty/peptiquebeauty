@@ -110,32 +110,33 @@ async function loadLiveStocks(){
     const url = `${ORDER_ENDPOINT}?action=stocks&_=${Date.now()}`;
     const r = await fetch(url, {cache:'no-store'});
     const data = await r.json();
-    if(!r.ok || data.ok !== true || !Array.isArray(data.stocks)) throw new Error(data.message || 'Catalog feed unavailable.');
 
-    const liveProducts = data.stocks.map(productFromStockRow).filter(Boolean);
-    if(!liveProducts.length) throw new Error('The Stocks tab has no valid product rows.');
+    if(!r.ok || data.ok !== true || !Array.isArray(data.stocks)){
+      throw new Error(data.message || 'Catalog feed unavailable.');
+    }
+
+    const liveProducts = data.stocks
+      .map(productFromStockRow)
+      .filter(Boolean);
+
+    if(!liveProducts.length){
+      throw new Error('The Stocks tab has no valid product rows.');
+    }
 
     products = liveProducts;
     stockFeedReady = true;
+
     syncCategoryFilters();
     renderProducts();
     updateCart();
-  }catch(err){
-  console.warn('Peptique live catalog feed:', err);
-  stockFeedReady = false;
-  }catch(err){
-  console.warn('Peptique live catalog feed:', err);
-  // Keep the storefront usable with the embedded fallback catalog if Google is temporarily unreachable.
-}
-  syncCategoryFilters();
-  renderProducts();
 
-  const noResults = document.querySelector('#no-results');
-  if(noResults){
-    noResults.hidden = false;
-    noResults.textContent = 'Unable to load current products. Please refresh the page and try again. ♡';
-  }
-}
+  }catch(err){
+    console.warn('Peptique live catalog feed:', err);
+    stockFeedReady = false;
+
+    // Keep the embedded fallback products visible
+    syncCategoryFilters();
+    renderProducts();
   }
 }
 

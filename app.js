@@ -123,7 +123,10 @@ async function loadLiveStocks(){
   }catch(err){
   console.warn('Peptique live catalog feed:', err);
   stockFeedReady = false;
-  products = [];
+  }catch(err){
+  console.warn('Peptique live catalog feed:', err);
+  // Keep the storefront usable with the embedded fallback catalog if Google is temporarily unreachable.
+}
   syncCategoryFilters();
   renderProducts();
 

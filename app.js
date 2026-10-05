@@ -474,7 +474,6 @@ function renderPackagingSplits() {
     }).join('')}
   `;
 }
-}
 function eligibleVialQty(){return cartEntries().reduce((sum,{product:p,qty})=>sum+(isVialDiscountEligible(p)?qty:0),0)}
 
 // Vial-only packaging is ₱200 off per eligible vial by default.

@@ -264,7 +264,43 @@ function toast(msg){let t=document.querySelector('.toast');if(!t){t=document.cre
 function openCart(){document.querySelector('.cart-drawer').classList.add('open');document.querySelector('.cart-drawer').setAttribute('aria-hidden','false');document.querySelector('.drawer-backdrop').classList.add('open')}
 function closeCart(){document.querySelector('.cart-drawer').classList.remove('open');document.querySelector('.cart-drawer').setAttribute('aria-hidden','true');document.querySelector('.drawer-backdrop').classList.remove('open')}
 
-document.addEventListener('click',e=>{
+document.addEventListener('click',e=>{ 
+    // Complete Set / Vial + BAC quantity controls
+  const packageButton = e.target.closest('[data-package-key]');
+
+  if (packageButton) {
+    const key = packageButton.dataset.packageKey;
+    const type = packageButton.dataset.packageType;
+    const delta = Number(packageButton.dataset.packageDelta);
+
+    const split = packagingSplits[key];
+
+    if (!split) return;
+
+    if (type === 'vialOnly') {
+      const newVialOnly = Math.max(
+        0,
+        Math.min(split.total, split.vialOnly + delta)
+      );
+
+      split.vialOnly = newVialOnly;
+      split.completeSet = split.total - newVialOnly;
+    }
+
+    if (type === 'completeSet') {
+      const newCompleteSet = Math.max(
+        0,
+        Math.min(split.total, split.completeSet + delta)
+      );
+
+      split.completeSet = newCompleteSet;
+      split.vialOnly = split.total - newCompleteSet;
+    }
+
+    renderPackagingSplits();
+    recalcCheckout();
+    return;
+  }
   const toggle=e.target.closest('[data-toggle-group]');
   if(toggle){
     const card=toggle.closest('[data-product-group]');
@@ -313,15 +349,131 @@ document.querySelectorAll('.nav a').forEach(a=>a.addEventListener('click',()=>do
 
 const checkout=document.querySelector('#checkout-modal'),backdrop=document.querySelector('#checkout-backdrop'),form=document.querySelector('#checkout-form');
 
-// One simple packaging choice at checkout keeps the product cards uncluttered.
-let packaging=document.querySelector('#packaging-method');
-if(!packaging){
-  const deliveryNoteEl=document.querySelector('#delivery-note');
-  const label=document.createElement('label');
-  label.className='span-2';
-  label.innerHTML='PACKAGING <select name="packagingMethod" id="packaging-method"><option value="Complete Set">Complete Set — listed prices</option><option value="Vial + BAC Water only">Vial + BAC Water only — ₱200 off each eligible vial</option></select><small class="field-help">Discount applies only to eligible MG injectable vials in your bag.</small>';
-  deliveryNoteEl.insertAdjacentElement('afterend',label);
-  packaging=label.querySelector('select');
+// Per-item packaging split.
+// Customers can divide eligible quantities between Complete Set
+// and Vial + BAC Water only.
+let packagingSplits = {};
+
+let packaging = document.querySelector('#packaging-method');
+
+if (packaging) {
+  const oldLabel = packaging.closest('label');
+  if (oldLabel) oldLabel.remove();
+  packaging = null;
+}
+
+let packagingBox = document.querySelector('#packaging-split');
+
+if (!packagingBox) {
+  packagingBox = document.createElement('div');
+  packagingBox.id = 'packaging-split';
+  packagingBox.className = 'span-2 packaging-split';
+
+  const deliveryNoteEl = document.querySelector('#delivery-note');
+  deliveryNoteEl.insertAdjacentElement('afterend', packagingBox);
+}
+
+function syncPackagingSplits() {
+  const entries = cartEntries();
+
+  entries.forEach(({product:p, qty, key}) => {
+    if (!isVialDiscountEligible(p)) return;
+
+    const old = packagingSplits[key];
+
+    if (!old || old.total !== qty) {
+      const vialOnly = old
+        ? Math.min(old.vialOnly, qty)
+        : 0;
+
+      packagingSplits[key] = {
+        total: qty,
+        vialOnly,
+        completeSet: qty - vialOnly
+      };
+    }
+  });
+
+  Object.keys(packagingSplits).forEach(key => {
+    if (!entries.some(x => x.key === key)) {
+      delete packagingSplits[key];
+    }
+  });
+}
+
+function renderPackagingSplits() {
+  syncPackagingSplits();
+
+  const eligible = cartEntries().filter(({product:p}) =>
+    isVialDiscountEligible(p)
+  );
+
+  if (!eligible.length) {
+    packagingBox.hidden = true;
+    return;
+  }
+
+  packagingBox.hidden = false;
+
+  packagingBox.innerHTML = `
+    <div class="packaging-split-title">
+      <strong>CHOOSE YOUR SET INCLUSIONS</strong>
+      <small>
+        Split each quantity between Complete Set and
+        Vial + BAC Water only.
+      </small>
+    </div>
+
+    ${eligible.map(({product:p, qty, key}) => {
+      const split = packagingSplits[key];
+
+      return `
+        <div class="packaging-item">
+          <div class="packaging-item-name">
+            <strong>${esc(p.name)} — ${esc(p.size)}</strong>
+            <small>${qty} vial${qty > 1 ? 's' : ''} in bag</small>
+          </div>
+
+          <div class="packaging-choice">
+            <span>Complete Set</span>
+
+            <div class="packaging-stepper">
+              <button type="button"
+                data-package-key="${key}"
+                data-package-type="completeSet"
+                data-package-delta="-1">−</button>
+
+              <b>${split.completeSet}</b>
+
+              <button type="button"
+                data-package-key="${key}"
+                data-package-type="completeSet"
+                data-package-delta="1">+</button>
+            </div>
+          </div>
+
+          <div class="packaging-choice">
+            <span>Vial + BAC Water only</span>
+
+            <div class="packaging-stepper">
+              <button type="button"
+                data-package-key="${key}"
+                data-package-type="vialOnly"
+                data-package-delta="-1">−</button>
+
+              <b>${split.vialOnly}</b>
+
+              <button type="button"
+                data-package-key="${key}"
+                data-package-type="vialOnly"
+                data-package-delta="1">+</button>
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('')}
+  `;
+}
 }
 function eligibleVialQty(){return cartEntries().reduce((sum,{product:p,qty})=>sum+(isVialDiscountEligible(p)?qty:0),0)}
 
@@ -343,7 +495,18 @@ if(!discountCodeInput){
   discountCodeStatus=codeLabel.querySelector('#discount-code-status');
 }
 function currentDiscountPerVial(){return appliedDiscountCode?appliedDiscountPerVial:200}
-function packagingDiscount(){return packaging&&packaging.value==='Vial + BAC Water only'?Math.min(subtotal(),eligibleVialQty()*currentDiscountPerVial()):0}
+function packagingDiscount(){
+  let vialOnlyQty = 0;
+
+  Object.values(packagingSplits).forEach(split => {
+    vialOnlyQty += Number(split.vialOnly || 0);
+  });
+
+  return Math.min(
+    subtotal(),
+    vialOnlyQty * currentDiscountPerVial()
+  );
+}
 async function applyDiscountCode(){
   const code=String(discountCodeInput?.value||'').trim().toUpperCase();
   if(discountCodeInput)discountCodeInput.value=code;
@@ -352,10 +515,16 @@ async function applyDiscountCode(){
     if(discountCodeStatus)discountCodeStatus.textContent='No code applied — vial-only packaging uses the standard ₱200 discount per eligible vial.';
     recalcCheckout();return;
   }
-  if(packaging?.value!=='Vial + BAC Water only'){
-    if(discountCodeStatus)discountCodeStatus.textContent='Choose Vial + BAC Water only first to use a packaging discount code.';
-    return;
+ const hasVialOnly = Object.values(packagingSplits)
+  .some(split => Number(split.vialOnly || 0) > 0);
+
+if(!hasVialOnly){
+  if(discountCodeStatus){
+    discountCodeStatus.textContent =
+      'Choose at least 1 Vial + BAC Water only first to use a packaging discount code.';
   }
+  return;
+}
   const old=discountApplyButton?.textContent;
   if(discountApplyButton){discountApplyButton.disabled=true;discountApplyButton.textContent='CHECKING…';}
   try{

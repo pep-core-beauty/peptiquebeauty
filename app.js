@@ -679,7 +679,7 @@ const itemLines=itemData.map(item=>{
 
   return `${item.qty}× ${item.name} ${item.size} · ${parts.join(' · ')} — ${peso(item.lineTotal)}`;
 }).join('\n');
-    lastOrderSummary=`PEPTIQUE BEAUTY PH\nOrder: ${orderNo}\n\n${itemLines}\n\nItems subtotal: ${peso(totals.sub)}nPackaging discount: ${totals.discount?'-'+peso(totals.discount):'—'}${appliedDiscountCode?`\nDiscount code: ${appliedDiscountCode} (${peso(appliedDiscountPerVial)}/vial)`:''}\nShipping: ${totals.shipText}\nTotal: ${peso(totals.total)}\n\nCustomer: ${fd.get('fullName')}\nContact: ${fd.get('contact')}\nEmail: ${fd.get('email')||'—'}\nAddress: ${fd.get('address')}, ${fd.get('barangay')}, ${fd.get('city')}, ${fd.get('province')}\nLandmark: ${fd.get('landmark')||'—'}\nDelivery: ${fd.get('deliveryMethod')}${fd.get('region')?' — '+fd.get('region'):''}\nPayment: ${fd.get('paymentMethod')}\nNotes: ${fd.get('notes')||'—'}`;
+    lastOrderSummary=`PEPTIQUE BEAUTY PH\nOrder: ${orderNo}\n\n${itemLines}\n\nItems subtotal: ${peso(totals.sub)}nDiscounts: ${totals.discount?'-'+peso(totals.discount):'—'}${appliedDiscountCode?`\nDiscount code: ${appliedDiscountCode} (${peso(appliedDiscountPerVial)}/vial)`:''}\nShipping: ${totals.shipText}\nTotal: ${peso(totals.total)}\n\nCustomer: ${fd.get('fullName')}\nContact: ${fd.get('contact')}\nEmail: ${fd.get('email')||'—'}\nAddress: ${fd.get('address')}, ${fd.get('barangay')}, ${fd.get('city')}, ${fd.get('province')}\nLandmark: ${fd.get('landmark')||'—'}\nDelivery: ${fd.get('deliveryMethod')}${fd.get('region')?' — '+fd.get('region'):''}\nPayment: ${fd.get('paymentMethod')}\nNotes: ${fd.get('notes')||'—'}`;
 
     const receipt=await fileToPayload(receiptFile);
     const payload={

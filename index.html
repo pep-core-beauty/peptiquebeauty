@@ -103,7 +103,95 @@
         <div class="rates"><span><b>₱100</b>Metro Manila</span><span><b>₱150</b>Luzon</span><span><b>₱200</b>Visayas</span><span><b>₱250</b>Mindanao</span></div>
       </div>
     </section>
+<section class="section tracking-section" id="track-order">
+  <div class="section-heading center">
+    <p class="eyebrow">WHERE'S MY PRETTY PACKAGE?</p>
+    <h2>Track your order</h2>
+    <p>Enter your Peptique order number to see its latest status.</p>
+  </div>
 
+  <div class="tracking-card">
+    <div class="tracking-search">
+      <label for="tracking-order-id">ORDER NUMBER</label>
+
+      <div class="tracking-search-row">
+        <input
+          id="tracking-order-id"
+          type="text"
+          placeholder="PB-2026XXXXXXXX"
+          autocomplete="off"
+        />
+        <button class="button button-primary" id="track-order-button" type="button">
+          TRACK ORDER
+        </button>
+      </div>
+
+      <small>Use the order number shown after checkout.</small>
+    </div>
+
+    <div id="tracking-message" class="tracking-message" hidden></div>
+
+    <div id="tracking-result" class="tracking-result" hidden>
+      <div class="tracking-result-head">
+        <div>
+          <small>ORDER</small>
+          <strong id="tracking-result-order"></strong>
+        </div>
+        <span id="tracking-status-badge"></span>
+      </div>
+
+      <div class="tracking-progress" id="tracking-progress">
+        <div class="tracking-step" data-status="Order Confirmed">
+          <span>✓</span>
+          <small>Confirmed</small>
+        </div>
+
+        <div class="tracking-step" data-status="Preparing">
+          <span>✓</span>
+          <small>Preparing</small>
+        </div>
+
+        <div class="tracking-step" data-status="Shipped">
+          <span>✓</span>
+          <small>Shipped</small>
+        </div>
+
+        <div class="tracking-step" data-status="Out for Delivery">
+          <span>✓</span>
+          <small>Out for Delivery</small>
+        </div>
+
+        <div class="tracking-step" data-status="Delivered">
+          <span>✓</span>
+          <small>Delivered</small>
+        </div>
+      </div>
+
+      <div class="tracking-details">
+        <div>
+          <small>COURIER</small>
+          <strong id="tracking-courier">—</strong>
+        </div>
+
+        <div>
+          <small>TRACKING NUMBER</small>
+          <strong id="tracking-number">—</strong>
+        </div>
+      </div>
+
+      <a
+        id="tracking-link"
+        class="button button-ghost tracking-link"
+        href="#"
+        target="_blank"
+        rel="noopener noreferrer"
+        hidden
+      >
+        TRACK WITH COURIER
+      </a>
+    </div>
+  </div>
+</section>
     <section class="section payment-preview">
       <div class="section-heading center"><p class="eyebrow">PAYMENT FIRST</p><h2>Choose what works for you.</h2><p>GCash · GoTyme Bank · MariBank</p></div>
       <div class="payment-pills"><span>GCash</span><span>GoTyme Bank</span><span>MariBank</span></div>

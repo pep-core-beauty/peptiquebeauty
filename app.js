@@ -658,6 +658,7 @@ form.addEventListener('submit',async e=>{
     code:p.code,
     name:p.name,
     size:p.size,
+    category:p.category,
     price:p.price,
     qty,
     completeSetQty,
@@ -693,6 +694,7 @@ const itemLines=itemData.map(item=>{
       eligibleVialQty:eligibleVialQty(),
       grossSubtotal:totals.sub,
       packagingDiscount:packagingDiscount(),
+      bulkDiscount:bulkVialDiscount(),
       items:itemData,itemsText:itemLines,subtotal:totals.netSubtotal,total:totals.total,notes:[appliedDiscountCode?`Discount code: ${appliedDiscountCode} (${peso(appliedDiscountPerVial)}/vial)`:'',totals.discount?`Packaging discount: -${peso(totals.discount)}`:'',fd.get('notes')||''].filter(Boolean).join(' | '),orderSummary:lastOrderSummary,receipt
     };
 

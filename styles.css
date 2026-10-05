@@ -254,3 +254,127 @@
   display: block;
   font-size: 13px;
 }
+/* ===== Packaging Split ===== */
+
+.packaging-split {
+  margin: 8px 0 22px;
+  padding: 20px;
+  background: #fff;
+  border: 1px solid rgba(128, 25, 45, 0.18);
+  border-radius: 18px;
+  box-shadow: 0 8px 24px rgba(93, 25, 38, 0.06);
+}
+
+.packaging-split-title {
+  margin-bottom: 16px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid rgba(128, 25, 45, 0.12);
+}
+
+.packaging-split-title strong {
+  display: block;
+  margin-bottom: 5px;
+  font-size: 13px;
+  letter-spacing: 0.09em;
+  color: #7b1f32;
+}
+
+.packaging-split-title small {
+  display: block;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #856b70;
+}
+
+/* Each product */
+.packaging-item {
+  padding: 15px;
+  margin-top: 12px;
+  background: #fff8f9;
+  border: 1px solid rgba(128, 25, 45, 0.12);
+  border-radius: 14px;
+}
+
+.packaging-item-name {
+  margin-bottom: 12px;
+}
+
+.packaging-item-name strong {
+  display: block;
+  font-size: 16px;
+  color: #42101b;
+}
+
+.packaging-item-name small {
+  display: block;
+  margin-top: 3px;
+  font-size: 12px;
+  color: #9a747c;
+}
+
+/* Complete Set / Vial + BAC rows */
+.packaging-choice {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 10px 12px;
+  margin-top: 8px;
+  background: #fff;
+  border: 1px solid rgba(128, 25, 45, 0.1);
+  border-radius: 11px;
+}
+
+.packaging-choice > span {
+  font-size: 14px;
+  color: #5b2631;
+}
+
+/* Quantity controls */
+.packaging-stepper {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.packaging-stepper button {
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 1px solid #8b2940;
+  border-radius: 50%;
+  background: #fff;
+  color: #7b1f32;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.packaging-stepper button:hover {
+  background: #7b1f32;
+  color: #fff;
+}
+
+.packaging-stepper b {
+  min-width: 18px;
+  text-align: center;
+  font-size: 15px;
+  color: #42101b;
+}
+
+/* Mobile */
+@media (max-width: 600px) {
+  .packaging-split {
+    padding: 15px;
+  }
+
+  .packaging-item {
+    padding: 12px;
+  }
+
+  .packaging-choice {
+    padding: 10px;
+  }
+}

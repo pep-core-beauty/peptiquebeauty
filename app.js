@@ -570,7 +570,8 @@ if(!discountRow){
   discountRow.innerHTML='<span>Discounts</span><b id="checkout-discount">-₱0</b>';
   shippingRow?.insertAdjacentElement('beforebegin',discountRow);
 }
-function openCheckout(){if(!cartEntries().length){toast('Add an item to your bag first');return}closeCart();checkout.hidden=false;backdrop.classList.add('open');recalcCheckout()}
+function openCheckout(){if(!cartEntries().length){toast('Add an item to your bag first');return}closeCart();checkout.hidden=false;
+  renderPackagingSplits();backdrop.classList.add('open');recalcCheckout()}
 function closeCheckout(){checkout.hidden=true;backdrop.classList.remove('open')}
 document.querySelector('#proceed-checkout').addEventListener('click',openCheckout);document.querySelector('#close-checkout').addEventListener('click',closeCheckout);backdrop.addEventListener('click',closeCheckout);
 

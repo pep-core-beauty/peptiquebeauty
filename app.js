@@ -723,9 +723,7 @@ async function trackOrder() {
     const statuses = [
       'Order Confirmed',
       'Preparing',
-      'Shipped',
-      'Out for Delivery',
-      'Delivered'
+      'Shipped'
     ];
 
     const currentIndex = statuses.findIndex(

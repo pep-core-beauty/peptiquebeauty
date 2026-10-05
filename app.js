@@ -510,6 +510,22 @@ function bulkVialDiscount(){
 
   return eligibleQty * 200;
 }
+function bulkVialDiscount(){
+  const eligibleQty = cartEntries().reduce((total, {product:p, qty}) => {
+    const category = String(p.category || '').trim().toLowerCase();
+
+    if(category === 'injectables' || category === 'topicals'){
+      return total + Number(qty || 0);
+    }
+
+    return total;
+  }, 0);
+
+  // Minimum of 3 eligible vials/items
+  if(eligibleQty < 3) return 0;
+
+  return eligibleQty * 200;
+}
 function packagingDiscount(){
   let vialOnlyQty = 0;
 
@@ -577,7 +593,12 @@ document.querySelector('#proceed-checkout').addEventListener('click',openCheckou
 
 const delivery=document.querySelector('#delivery-method'),region=document.querySelector('#region'),regionLabel=document.querySelector('#region-label'),deliveryNote=document.querySelector('#delivery-note');
 function recalcCheckout(){
- const sub=subtotal();const discount=packagingDiscount();let ship=0;let shipText='-';
+ const sub = subtotal();
+const packagingDisc = packagingDiscount();
+const bulkDisc = bulkVialDiscount();
+const discount = Math.min(sub, packagingDisc + bulkDisc);
+let ship = 0;
+let shipText = '-';
   const deliveryMethod=(delivery.value||'').trim();
   const selectedRegion=(region.value||'').trim();
   if(deliveryMethod==='Lalamove'){shipText='Paid to rider';deliveryNote.hidden=false;deliveryNote.textContent='Lalamove delivery fee is paid directly to the rider upon delivery and is not included in your store total.';regionLabel.hidden=true;region.required=false;}

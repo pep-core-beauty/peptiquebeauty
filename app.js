@@ -578,7 +578,6 @@ delivery.addEventListener('change',handleDeliveryChange);
 delivery.addEventListener('input',handleDeliveryChange);
 region.addEventListener('change',recalcCheckout);
 region.addEventListener('input',recalcCheckout);
-packaging?.addEventListener('change',()=>{if(packaging.value!=='Vial + BAC Water only'){appliedDiscountCode='';appliedDiscountPerVial=200;if(discountCodeStatus)discountCodeStatus.textContent='Discount codes apply to Vial + BAC Water only.';}recalcCheckout();});
 
 const payment=document.querySelector('#payment-method'),panel=document.querySelector('#payment-panel'),qr=document.querySelector('#payment-qr'),paymentName=document.querySelector('#payment-name');
 payment.addEventListener('change',()=>{if(payment.value&&paymentQR[payment.value]){qr.src=paymentQR[payment.value];paymentName.textContent=payment.value;panel.hidden=false}else panel.hidden=true});

@@ -695,7 +695,7 @@ const itemLines=itemData.map(item=>{
       grossSubtotal:totals.sub,
       packagingDiscount:packagingDiscount(),
       bulkDiscount:bulkVialDiscount(),
-      items:itemData,itemsText:itemLines,subtotal:totals.netSubtotal,total:totals.total,notes:[appliedDiscountCode?`Discount code: ${appliedDiscountCode} (${peso(appliedDiscountPerVial)}/vial)`:'',totals.discount?`Packaging discount: -${peso(totals.discount)}`:'',fd.get('notes')||''].filter(Boolean).join(' | '),orderSummary:lastOrderSummary,receipt
+      items:itemData,itemsText:itemLines,subtotal:totals.netSubtotal,total:totals.total,notes:[appliedDiscountCode?`Discount code: ${appliedDiscountCode} (${peso(appliedDiscountPerVial)}/vial)`:'',fd.get('notes')||''].filter(Boolean).join(' | '),orderSummary:lastOrderSummary,receipt
     };
 
     const r=await fetch(ORDER_ENDPOINT,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload)});

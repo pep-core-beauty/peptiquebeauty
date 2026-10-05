@@ -672,5 +672,109 @@ form.addEventListener('submit',async e=>{
 });
 document.querySelector('#copy-order').addEventListener('click',async()=>{try{await navigator.clipboard.writeText(lastOrderSummary);toast('Order summary copied ♡')}catch{toast('Copy unavailable — screenshot your order number instead')}});
 document.querySelector('#continue-shopping').addEventListener('click',()=>{document.querySelector('#success-modal').hidden=true;cart={};saveCart();form.reset();if(packaging)packaging.value='Complete Set';appliedDiscountCode='';appliedDiscountPerVial=200;if(discountCodeInput)discountCodeInput.value='';if(discountCodeStatus)discountCodeStatus.textContent='Optional. Active PB codes change the vial-only discount per eligible vial.';panel.hidden=true;document.querySelector('#file-name').textContent='Choose image or PDF';document.querySelector('#shop').scrollIntoView({behavior:'smooth'})});
+// ===== Order Tracking =====
 
+const trackingInput = document.querySelector('#tracking-order-id');
+const trackingButton = document.querySelector('#track-order-button');
+const trackingMessage = document.querySelector('#tracking-message');
+const trackingResult = document.querySelector('#tracking-result');
+
+async function trackOrder() {
+  const orderId = String(trackingInput?.value || '').trim().toUpperCase();
+
+  if (!orderId) {
+    trackingResult.hidden = true;
+    trackingMessage.hidden = false;
+    trackingMessage.textContent = 'Please enter your Peptique order number.';
+    return;
+  }
+
+  const oldText = trackingButton.textContent;
+  trackingButton.disabled = true;
+  trackingButton.textContent = 'TRACKING…';
+  trackingMessage.hidden = true;
+  trackingResult.hidden = true;
+
+  try {
+    const response = await fetch(
+      `${ORDER_ENDPOINT}?action=tracking&orderId=${encodeURIComponent(orderId)}&_=${Date.now()}`,
+      { cache: 'no-store' }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok || data.ok !== true) {
+      throw new Error(data.message || 'Order not found.');
+    }
+
+    document.querySelector('#tracking-result-order').textContent =
+      data.orderId || orderId;
+
+    document.querySelector('#tracking-status-badge').textContent =
+      data.status || 'Order Confirmed';
+
+    document.querySelector('#tracking-courier').textContent =
+      data.courier || 'Not assigned yet';
+
+    document.querySelector('#tracking-number').textContent =
+      data.trackingNumber || 'Not available yet';
+
+    // Progress tracker
+    const statuses = [
+      'Order Confirmed',
+      'Preparing',
+      'Shipped',
+      'Out for Delivery',
+      'Delivered'
+    ];
+
+    const currentIndex = statuses.findIndex(
+      status => status.toLowerCase() ===
+        String(data.status || '').trim().toLowerCase()
+    );
+
+    document.querySelectorAll('.tracking-step').forEach((step, index) => {
+      step.classList.remove('complete', 'active');
+
+      if (currentIndex >= 0 && index < currentIndex) {
+        step.classList.add('complete');
+      }
+
+      if (currentIndex >= 0 && index === currentIndex) {
+        step.classList.add('active');
+      }
+    });
+
+    // Courier tracking button
+    const trackingLink = document.querySelector('#tracking-link');
+
+    if (data.trackingLink) {
+      trackingLink.href = data.trackingLink;
+      trackingLink.hidden = false;
+    } else {
+      trackingLink.hidden = true;
+      trackingLink.removeAttribute('href');
+    }
+
+    trackingResult.hidden = false;
+
+  } catch (err) {
+    trackingResult.hidden = true;
+    trackingMessage.hidden = false;
+    trackingMessage.textContent =
+      err.message || 'We could not find that order. Please check your Order ID.';
+  } finally {
+    trackingButton.disabled = false;
+    trackingButton.textContent = oldText;
+  }
+}
+
+trackingButton?.addEventListener('click', trackOrder);
+
+trackingInput?.addEventListener('keydown', e => {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    trackOrder();
+  }
+});
 syncCategoryFilters();renderProducts();updateCart();loadLiveStocks();

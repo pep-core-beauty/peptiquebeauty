@@ -502,22 +502,6 @@ function bulkVialDiscount(){
     const category = String(p.category || '').trim().toLowerCase();
 
     if(category === 'injectables' || category === 'topicals'){
-      return total + qty;
-    }
-
-    return total;
-  }, 0);
-
-  // Minimum 3 eligible vials/items
-  if(eligibleQty < 3) return 0;
-
-  return eligibleQty * 200;
-}
-function bulkVialDiscount(){
-  const eligibleQty = cartEntries().reduce((total, {product:p, qty}) => {
-    const category = String(p.category || '').trim().toLowerCase();
-
-    if(category === 'injectables' || category === 'topicals'){
       return total + Number(qty || 0);
     }
 

@@ -453,7 +453,10 @@ function renderPackagingSplits() {
           </div>
 
           <div class="packaging-choice">
-            <span>Vial + BAC Water only</span>
+            <span class="packaging-option-label">
+  Vial + BAC Water only
+  <small>Save ₱200 per vial</small>
+</span>
 
             <div class="packaging-stepper">
               <button type="button"

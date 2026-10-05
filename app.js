@@ -692,7 +692,7 @@ const itemLines=itemData.map(item=>{
       discountPerVial:currentDiscountPerVial(),
       eligibleVialQty:eligibleVialQty(),
       grossSubtotal:totals.sub,
-      packagingDiscount:totals.discount,
+      packagingDiscount:packagingDiscount(),
       items:itemData,itemsText:itemLines,subtotal:totals.netSubtotal,total:totals.total,notes:[appliedDiscountCode?`Discount code: ${appliedDiscountCode} (${peso(appliedDiscountPerVial)}/vial)`:'',totals.discount?`Packaging discount: -${peso(totals.discount)}`:'',fd.get('notes')||''].filter(Boolean).join(' | '),orderSummary:lastOrderSummary,receipt
     };
 

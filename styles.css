@@ -378,3 +378,15 @@
     padding: 10px;
   }
 }
+.packaging-option-label {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.packaging-option-label small {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: #a33a52;
+}

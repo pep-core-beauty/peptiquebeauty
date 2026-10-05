@@ -640,10 +640,46 @@ form.addEventListener('submit',async e=>{
     if(String(fd.get('deliveryMethod')||'').startsWith('J&T') && totals.ship<=0){throw new Error('Please select your J&T destination so the shipping fee can be added.')} 
     const orderNo=makeOrderNumber();
     const entries=cartEntries();
-    const packagingChoice=String(fd.get('packagingMethod')||'Complete Set');
-    const itemLines=entries.map(({product:p,qty})=>`${qty}× ${p.name} ${p.size}${packagingChoice==='Vial + BAC Water only'&&isVialDiscountEligible(p)?' · Vial + BAC Water only':''} — ${peso(p.price*qty)}`).join('\n');
-    const itemData=entries.map(({product:p,qty,key})=>({id:p.id,cartKey:key,code:p.code,name:p.name,size:p.size,package:packagingChoice==='Vial + BAC Water only'&&isVialDiscountEligible(p)?'Vial + BAC Water only':'Complete Set',price:p.price,qty,lineTotal:p.price*qty}));
-    lastOrderSummary=`PEPTIQUE BEAUTY PH\nOrder: ${orderNo}\n\n${itemLines}\n\nItems subtotal: ${peso(totals.sub)}\nPackaging: ${packagingChoice}\nPackaging discount: ${totals.discount?'-'+peso(totals.discount):'—'}${appliedDiscountCode?`\nDiscount code: ${appliedDiscountCode} (${peso(appliedDiscountPerVial)}/vial)`:''}\nShipping: ${totals.shipText}\nTotal: ${peso(totals.total)}\n\nCustomer: ${fd.get('fullName')}\nContact: ${fd.get('contact')}\nEmail: ${fd.get('email')||'—'}\nAddress: ${fd.get('address')}, ${fd.get('barangay')}, ${fd.get('city')}, ${fd.get('province')}\nLandmark: ${fd.get('landmark')||'—'}\nDelivery: ${fd.get('deliveryMethod')}${fd.get('region')?' — '+fd.get('region'):''}\nPayment: ${fd.get('paymentMethod')}\nNotes: ${fd.get('notes')||'—'}`;
+    const itemData=entries.map(({product:p,qty,key})=>{
+  const split=packagingSplits[key];
+  const eligible=isVialDiscountEligible(p);
+
+  const completeSetQty=eligible
+    ? Number(split?.completeSet || 0)
+    : Number(qty || 0);
+
+  const vialOnlyQty=eligible
+    ? Number(split?.vialOnly || 0)
+    : 0;
+
+  return {
+    id:p.id,
+    cartKey:key,
+    code:p.code,
+    name:p.name,
+    size:p.size,
+    price:p.price,
+    qty,
+    completeSetQty,
+    vialOnlyQty,
+    lineTotal:p.price*qty
+  };
+});
+
+const itemLines=itemData.map(item=>{
+  const parts=[];
+
+  if(item.completeSetQty>0){
+    parts.push(`Complete Set ×${item.completeSetQty}`);
+  }
+
+  if(item.vialOnlyQty>0){
+    parts.push(`Vial + BAC Water ×${item.vialOnlyQty}`);
+  }
+
+  return `${item.qty}× ${item.name} ${item.size} · ${parts.join(' · ')} — ${peso(item.lineTotal)}`;
+}).join('\n');
+    lastOrderSummary=`PEPTIQUE BEAUTY PH\nOrder: ${orderNo}\n\n${itemLines}\n\nItems subtotal: ${peso(totals.sub)}nPackaging discount: ${totals.discount?'-'+peso(totals.discount):'—'}${appliedDiscountCode?`\nDiscount code: ${appliedDiscountCode} (${peso(appliedDiscountPerVial)}/vial)`:''}\nShipping: ${totals.shipText}\nTotal: ${peso(totals.total)}\n\nCustomer: ${fd.get('fullName')}\nContact: ${fd.get('contact')}\nEmail: ${fd.get('email')||'—'}\nAddress: ${fd.get('address')}, ${fd.get('barangay')}, ${fd.get('city')}, ${fd.get('province')}\nLandmark: ${fd.get('landmark')||'—'}\nDelivery: ${fd.get('deliveryMethod')}${fd.get('region')?' — '+fd.get('region'):''}\nPayment: ${fd.get('paymentMethod')}\nNotes: ${fd.get('notes')||'—'}`;
 
     const receipt=await fileToPayload(receiptFile);
     const payload={
@@ -651,13 +687,13 @@ form.addEventListener('submit',async e=>{
       customer:{fullName:fd.get('fullName'),contact:fd.get('contact'),email:fd.get('email')||'',address:fd.get('address'),barangay:fd.get('barangay'),city:fd.get('city'),province:fd.get('province'),landmark:fd.get('landmark')||''},
       delivery:{method:fd.get('deliveryMethod'),region:fd.get('region')||'',shippingFee:totals.ship,shippingText:totals.shipText},
       payment:{method:fd.get('paymentMethod'),status:receiptFile?'Paid - To verify':'Payment selected - receipt not uploaded'},
-      packagingMethod:packagingChoice,
+      packagingMethod:'Split per item',
       discountCode:appliedDiscountCode,
       discountPerVial:currentDiscountPerVial(),
       eligibleVialQty:eligibleVialQty(),
       grossSubtotal:totals.sub,
       packagingDiscount:totals.discount,
-      items:itemData,itemsText:itemLines,subtotal:totals.netSubtotal,total:totals.total,notes:[`Packaging: ${packagingChoice}`,appliedDiscountCode?`Discount code: ${appliedDiscountCode} (${peso(appliedDiscountPerVial)}/vial)`:'',totals.discount?`Packaging discount: -${peso(totals.discount)}`:'',fd.get('notes')||''].filter(Boolean).join(' | '),orderSummary:lastOrderSummary,receipt
+      items:itemData,itemsText:itemLines,subtotal:totals.netSubtotal,total:totals.total,notes:[appliedDiscountCode?`Discount code: ${appliedDiscountCode} (${peso(appliedDiscountPerVial)}/vial)`:'',totals.discount?`Packaging discount: -${peso(totals.discount)}`:'',fd.get('notes')||''].filter(Boolean).join(' | '),orderSummary:lastOrderSummary,receipt
     };
 
     const r=await fetch(ORDER_ENDPOINT,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload)});
